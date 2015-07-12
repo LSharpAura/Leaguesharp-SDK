@@ -382,11 +382,11 @@ namespace MightyLux
             var passivedmg = 10 + (8*Player.Level) + Player.FlatMagicDamageMod*0.2 - target.FlatMagicReduction;
             double rdmg1 = 0;
             if (R.Level == 1)
-                rdmg1 += Player.CalculateDamage(target, DamageType.Magical, 300 + 0.75*Player.FlatMagicDamageMod);
+                rdmg1 += Player.CalculateDamage(target, DamageType.Magical, 290 + 0.75*Player.FlatMagicDamageMod);
             if (R.Level == 2)
-                rdmg1 += Player.CalculateDamage(target, DamageType.Magical, 400 + 0.75 * Player.FlatMagicDamageMod);
+                rdmg1 += Player.CalculateDamage(target, DamageType.Magical, 390 + 0.75 * Player.FlatMagicDamageMod);
             if (R.Level == 3)
-                rdmg1 += Player.CalculateDamage(target, DamageType.Magical, 500 + 0.75 * Player.FlatMagicDamageMod);
+                rdmg1 += Player.CalculateDamage(target, DamageType.Magical, 490 + 0.75 * Player.FlatMagicDamageMod);
             if (target.HasBuff("luxilluminatingfraulein"))
                 rdmg1 += passivedmg;
 
@@ -456,7 +456,6 @@ namespace MightyLux
         {
             var target = TargetSelector.GetTarget(Q.Range);
             var qprediction = Q.GetPrediction(target);
-            var eprediciton = E.GetPrediction(target);
             if (target == null || target.IsInvulnerable)
                 return;
 
@@ -465,26 +464,38 @@ namespace MightyLux
                 new List<Vector2> {qprediction.CastPosition.ToVector2()});
             var getcollision = collision.Where(x => !(x is Obj_AI_Hero)).Count(x => x.IsMinion);
 
-            if ((Config["combo"]["UseQ"].GetValue<MenuBool>().Value ||
-                 Config["harass"]["harrQ"].GetValue<MenuBool>().Value && Player.ManaPercent >= Config["harass"]["harassmana"].GetValue<MenuSlider>().Value))
+            if ((Config["combo"]["UseQ"].GetValue<MenuBool>().Value && Orbwalker.ActiveMode != OrbwalkerMode.Hybrid))
+            {
+                if (Q.GetPrediction(target).Hitchance >= PredictionQ() && getcollision <= 1)
+                    Q.Cast(target);
+            }
+            if (Config["harass"]["harrQ"].GetValue<MenuBool>().Value && Player.ManaPercent >= Config["harass"]["harassmana"].GetValue<MenuSlider>().Value 
+                 && Orbwalker.ActiveMode != OrbwalkerMode.Orbwalk)
             {
                 if (Q.GetPrediction(target).Hitchance >= PredictionQ() && getcollision <= 1)
                     Q.Cast(target);
             }
 
             //ECAST
-            if ((Config["combo"]["UseE"].GetValue<MenuBool>().Value ||
-                 Config["harass"]["harrE"].GetValue<MenuBool>().Value && Player.ManaPercent >= Config["harass"]["harassmana"].GetValue<MenuSlider>().Value))
+            if ((Config["combo"]["UseE"].GetValue<MenuBool>().Value) && Orbwalker.ActiveMode != OrbwalkerMode.Hybrid)
             {
                 if (LuxE == null && E.IsReady() && E.GetPrediction(target).Hitchance >= PredictionE())
                     E.Cast(target);
-                //EDETONATE
                 if (target.HasBuff("luxilluminatingfraulein") && target.HasBuff("LuxLightBindingMis") &&
                     Player.Distance(target.Position) <= Player.GetRealAutoAttackRange())
                     return;
-
                 if (LuxE != null && target.Distance(LuxE.Position) <= 280)
                     E.Cast();
+            }
+           if (Config["harass"]["harrE"].GetValue<MenuBool>().Value && Player.ManaPercent >= Config["harass"]["harassmana"].GetValue<MenuSlider>().Value && Orbwalker.ActiveMode != OrbwalkerMode.Orbwalk)
+            {
+                if (LuxE == null && E.IsReady() && E.GetPrediction(target).Hitchance >= PredictionE())
+                    E.Cast(target);
+                if (target.HasBuff("luxilluminatingfraulein") && target.HasBuff("LuxLightBindingMis") &&
+                    Player.Distance(target.Position) <= Player.GetRealAutoAttackRange())
+                    return;
+                if (LuxE != null && target.Distance(LuxE.Position) <= 280)
+                    E.Cast();  
             }
         }
 
