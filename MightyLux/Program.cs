@@ -65,7 +65,6 @@ namespace MightyLux
 
             combo.Add(new MenuSeparator("Advanced Q Settings", "Advanced Q Settings"));
             combo.Add(new MenuBool("AutoQcc", "Auto [Q] on CC'd enemies", true));
-            combo.Add(new MenuBool("AutoQturret", "Auto [Q] under turret", false));
             combo.Add(new MenuBool("antigap", "Auto [Q] on Gapclosers", false));
             combo.Add(new MenuSeparator("Advanced W Settings", "Advanced W Settings"));
             combo.Add(new MenuBool("AutoWturret", "Auto [W] on Turret Shots", true));
@@ -231,13 +230,9 @@ namespace MightyLux
             var target = TargetSelector.GetTarget(Q.Range);
             var cc = target.HasBuffOfType(BuffType.Knockup) || target.HasBuffOfType(BuffType.Stun) ||
                      target.HasBuffOfType(BuffType.Snare) || target.HasBuffOfType(BuffType.Suppression) || target.HasBuffOfType(BuffType.Slow);
-            var underturret =
-                ObjectManager.Get<Obj_AI_Turret>()
-                    .Where(a => a.IsAlly && a.Distance(target.Position) <= 775 && !a.IsDead);
+
 
             if (Config["combo"]["AutoQcc"].GetValue<MenuBool>().Value && Q.IsReady() && cc && Q.GetPrediction(target).Hitchance >= PredictionQ())
-                Q.Cast(target);
-            if (Config["combo"]["AutoQturret"].GetValue<MenuBool>().Value && Q.IsReady() && underturret.Any() && Q.GetPrediction(target).Hitchance >= PredictionQ())
                 Q.Cast(target);
         }
 
