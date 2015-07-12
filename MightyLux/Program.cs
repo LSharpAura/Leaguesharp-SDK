@@ -108,7 +108,7 @@ namespace MightyLux
             drawing.Add(new MenuColor("drawr", "[R] Range Draw Color", new ColorBGRA(32, 20, 10, 255)));
             drawing.Add(new MenuSeparator("Misc Drawings", "Misc Drawings"));
             drawing.Add(new MenuList<string>("dmgdrawmode", "Damage Indicator:",
-                objects: new[] {"Common", "Tekst Based"}));
+                objects: new[] {"SDK", "Tekst Based"}));
             drawing.Add(new MenuBool("orbmode", "Draw Active Orbwalk Mode", true));
 
             combo.Add(new MenuSeparator("science", "Prediction Settings"));

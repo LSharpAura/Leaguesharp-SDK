@@ -1,0 +1,14 @@
+C:\Users\HAF911\Documents\GitHub\Leaguesharp-SDK\MightyLux\bin\Release\MightyLux.exe.config
+C:\Users\HAF911\Documents\GitHub\Leaguesharp-SDK\MightyLux\bin\Release\MightyLux.exe
+C:\Users\HAF911\Documents\GitHub\Leaguesharp-SDK\MightyLux\bin\Release\MightyLux.pdb
+C:\Users\HAF911\Documents\GitHub\Leaguesharp-SDK\MightyLux\bin\Release\LeagueSharp.dll
+C:\Users\HAF911\Documents\GitHub\Leaguesharp-SDK\MightyLux\bin\Release\LeagueSharp.SDK.dll
+C:\Users\HAF911\Documents\GitHub\Leaguesharp-SDK\MightyLux\bin\Release\SharpDX.Direct3D9.dll
+C:\Users\HAF911\Documents\GitHub\Leaguesharp-SDK\MightyLux\bin\Release\SharpDX.dll
+C:\Users\HAF911\Documents\GitHub\Leaguesharp-SDK\MightyLux\bin\Release\Newtonsoft.Json.dll
+C:\Users\HAF911\Documents\GitHub\Leaguesharp-SDK\MightyLux\bin\Release\LeagueSharp.xml
+C:\Users\HAF911\Documents\GitHub\Leaguesharp-SDK\MightyLux\bin\Release\Newtonsoft.Json.pdb
+C:\Users\HAF911\Documents\GitHub\Leaguesharp-SDK\MightyLux\bin\Release\Newtonsoft.Json.xml
+C:\Users\HAF911\Documents\GitHub\Leaguesharp-SDK\MightyLux\obj\Debug\MightyLux.csprojResolveAssemblyReference.cache
+C:\Users\HAF911\Documents\GitHub\Leaguesharp-SDK\MightyLux\obj\Debug\MightyLux.exe
+C:\Users\HAF911\Documents\GitHub\Leaguesharp-SDK\MightyLux\obj\Debug\MightyLux.pdb
