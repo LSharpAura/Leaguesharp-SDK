@@ -201,11 +201,14 @@ namespace MightyLux
 
             var target = TargetSelector.GetTarget(Q.Range);
             var cc = target.HasBuffOfType(BuffType.Knockup) || target.HasBuffOfType(BuffType.Stun) ||
-                     target.HasBuffOfType(BuffType.Snare) || target.HasBuffOfType(BuffType.Suppression);
-            var turret = target.IsUnderTurret(false);
+                     target.HasBuffOfType(BuffType.Snare) || target.HasBuffOfType(BuffType.Suppression) || target.HasBuffOfType(BuffType.Slow);
+            var underturret =
+                ObjectManager.Get<Obj_AI_Turret>()
+                    .Where(a => a.IsAlly && a.Distance(target.Position) <= 775 && !a.IsDead);
+
             if (Config["combo"]["AutoQcc"].GetValue<MenuBool>().Value && Q.IsReady() && cc && Q.GetPrediction(target).Hitchance >= PredictionQ())
                 Q.Cast(target);
-            if (Config["combo"]["AutoQturret"].GetValue<MenuBool>().Value && Q.IsReady() && turret && Q.GetPrediction(target).Hitchance >= PredictionQ())
+            if (Config["combo"]["AutoQturret"].GetValue<MenuBool>().Value && Q.IsReady() && underturret.Any() && Q.GetPrediction(target).Hitchance >= PredictionQ())
                 Q.Cast(target);
         }
 
@@ -441,7 +444,7 @@ namespace MightyLux
                     Laneclear();
                     break;
                 case OrbwalkerMode.Hybrid:
-                    ComboLogic();
+                    HarassLogic();
                     break;
             }
             if (Config["spell"]["UseR"].GetValue<MenuBool>().Value)
@@ -578,6 +581,35 @@ namespace MightyLux
             return dmg;
         }
 
+        private static void HarassLogic()
+        {
+            var target = TargetSelector.GetTarget(Q.Range);
+            var qprediction = Q.GetPrediction(target);
+            if (target == null || target.IsInvulnerable)
+                return;
+
+            //GetCollision
+            var collision = Q.GetCollision(ObjectManager.Player.ServerPosition.ToVector2(),
+                new List<Vector2> { qprediction.CastPosition.ToVector2() });
+            var getcollision = collision.Where(x => !(x is Obj_AI_Hero)).Count(x => x.IsMinion);
+
+            if (Config["harass"]["harrQ"].GetValue<MenuBool>().Value && Player.ManaPercent >= Config["harass"]["harassmana"].GetValue<MenuSlider>().Value)
+            {
+                if (Q.GetPrediction(target).Hitchance >= PredictionQ() && getcollision <= 1)
+                    Q.Cast(target);
+            }
+
+            if (Config["harass"]["harrE"].GetValue<MenuBool>().Value && Player.ManaPercent >= Config["harass"]["harassmana"].GetValue<MenuSlider>().Value && Orbwalker.ActiveMode != OrbwalkerMode.Orbwalk)
+            {
+                if (LuxE == null && E.IsReady() && E.GetPrediction(target).Hitchance >= PredictionE())
+                    E.Cast(target);
+                if (target.HasBuff("luxilluminatingfraulein") && target.HasBuff("LuxLightBindingMis") &&
+                    Player.Distance(target.Position) <= Player.GetRealAutoAttackRange())
+                    return;
+                if (LuxE != null && target.Distance(LuxE.Position) <= 280)
+                    E.Cast();
+            }
+        }
         private static void ComboLogic()
         {
             var target = TargetSelector.GetTarget(Q.Range);
@@ -595,13 +627,6 @@ namespace MightyLux
                 if (Q.GetPrediction(target).Hitchance >= PredictionQ() && getcollision <= 1)
                     Q.Cast(target);
             }
-            if (Config["harass"]["harrQ"].GetValue<MenuBool>().Value && Player.ManaPercent >= Config["harass"]["harassmana"].GetValue<MenuSlider>().Value 
-                 && Orbwalker.ActiveMode != OrbwalkerMode.Orbwalk)
-            {
-                if (Q.GetPrediction(target).Hitchance >= PredictionQ() && getcollision <= 1)
-                    Q.Cast(target);
-            }
-
             //ECAST
             if ((Config["spell"]["UseE"].GetValue<MenuBool>().Value) && Orbwalker.ActiveMode != OrbwalkerMode.Hybrid)
             {
@@ -612,16 +637,6 @@ namespace MightyLux
                     return;
                 if (LuxE != null && target.Distance(LuxE.Position) <= 280)
                     E.Cast();
-            }
-           if (Config["harass"]["harrE"].GetValue<MenuBool>().Value && Player.ManaPercent >= Config["harass"]["harassmana"].GetValue<MenuSlider>().Value && Orbwalker.ActiveMode != OrbwalkerMode.Orbwalk)
-            {
-                if (LuxE == null && E.IsReady() && E.GetPrediction(target).Hitchance >= PredictionE())
-                    E.Cast(target);
-                if (target.HasBuff("luxilluminatingfraulein") && target.HasBuff("LuxLightBindingMis") &&
-                    Player.Distance(target.Position) <= Player.GetRealAutoAttackRange())
-                    return;
-                if (LuxE != null && target.Distance(LuxE.Position) <= 280)
-                    E.Cast();  
             }
         }
 
