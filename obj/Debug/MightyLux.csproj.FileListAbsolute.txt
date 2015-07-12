@@ -1,0 +1,14 @@
+C:\Users\HAF911\Documents\Visual Studio 2013\Projects\MagicalGirlLux\MagicalGirlLux\bin\Release\MightyLux.exe.config
+C:\Users\HAF911\Documents\Visual Studio 2013\Projects\MagicalGirlLux\MagicalGirlLux\bin\Release\MightyLux.exe
+C:\Users\HAF911\Documents\Visual Studio 2013\Projects\MagicalGirlLux\MagicalGirlLux\bin\Release\MightyLux.pdb
+C:\Users\HAF911\Documents\Visual Studio 2013\Projects\MagicalGirlLux\MagicalGirlLux\bin\Release\LeagueSharp.dll
+C:\Users\HAF911\Documents\Visual Studio 2013\Projects\MagicalGirlLux\MagicalGirlLux\bin\Release\LeagueSharp.SDK.dll
+C:\Users\HAF911\Documents\Visual Studio 2013\Projects\MagicalGirlLux\MagicalGirlLux\bin\Release\SharpDX.Direct3D9.dll
+C:\Users\HAF911\Documents\Visual Studio 2013\Projects\MagicalGirlLux\MagicalGirlLux\bin\Release\SharpDX.dll
+C:\Users\HAF911\Documents\Visual Studio 2013\Projects\MagicalGirlLux\MagicalGirlLux\bin\Release\Newtonsoft.Json.dll
+C:\Users\HAF911\Documents\Visual Studio 2013\Projects\MagicalGirlLux\MagicalGirlLux\bin\Release\LeagueSharp.xml
+C:\Users\HAF911\Documents\Visual Studio 2013\Projects\MagicalGirlLux\MagicalGirlLux\bin\Release\Newtonsoft.Json.pdb
+C:\Users\HAF911\Documents\Visual Studio 2013\Projects\MagicalGirlLux\MagicalGirlLux\bin\Release\Newtonsoft.Json.xml
+C:\Users\HAF911\Documents\Visual Studio 2013\Projects\MagicalGirlLux\MagicalGirlLux\obj\Debug\MightyLux.csprojResolveAssemblyReference.cache
+C:\Users\HAF911\Documents\Visual Studio 2013\Projects\MagicalGirlLux\MagicalGirlLux\obj\Debug\MightyLux.exe
+C:\Users\HAF911\Documents\Visual Studio 2013\Projects\MagicalGirlLux\MagicalGirlLux\obj\Debug\MightyLux.pdb
