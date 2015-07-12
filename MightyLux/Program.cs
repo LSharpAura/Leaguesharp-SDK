@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Remoting.Channels;
 using System.Windows.Forms;
 using LeagueSharp;
 using LeagueSharp.SDK.Core;
@@ -65,7 +66,6 @@ namespace MightyLux
 
             combo.Add(new MenuSeparator("Advanced Q Settings", "Advanced Q Settings"));
             combo.Add(new MenuBool("AutoQcc", "Auto [Q] on CC'd enemies", true));
-            combo.Add(new MenuBool("antigap", "Auto [Q] on Gapclosers", false));
             combo.Add(new MenuSeparator("Advanced W Settings", "Advanced W Settings"));
             combo.Add(new MenuBool("AutoWturret", "Auto [W] on Turret Shots", true));
             combo.Add(new MenuSeparator("Advanced R Settings", "Advanced R Settings"));
@@ -153,31 +153,12 @@ namespace MightyLux
             Game.OnUpdate += OnUpdate;
             GameObject.OnDelete += GameObject_OnDelete;
             GameObject.OnCreate += GameObject_OnCreate;
-            AntiGapcloser.OnEnemyGapcloser += Antigap;
             Obj_AI_Turret.OnAggro += Turretaggro;
             Obj_AI_Base.OnProcessSpellCast += TurretOnProcessSpellCast;
             Drawing.OnDraw += Ondraw;
             Drawing.OnDraw += DamageDrawing;
             Drawing.OnDraw += MiscDrawings;
         }
-
-        private static void Antigap(ActiveGapcloser gapcloser)
-        {
-            if (Player.IsDead || gapcloser.Sender.IsInvulnerable)
-                return;
-
-            var targetpos = Drawing.WorldToScreen(gapcloser.Sender.Position);
-            if (gapcloser.Sender.IsValidTarget(Q.Range) && Config["combo"]["antigap"].GetValue<MenuBool>().Value)
-            {
-                Drawing.DrawCircle(gapcloser.Sender.Position, gapcloser.Sender.BoundingRadius, System.Drawing.Color.DeepPink);
-                Drawing.DrawText(targetpos[0] - 40, targetpos[1] + 20, System.Drawing.Color.MediumPurple, "GAPCLOSER!");
-            }
-
-            if (Q.IsReady() && gapcloser.Sender.IsValidTarget(Q.Range) &&
-                Config["combo"]["antigap"].GetValue<MenuBool>().Value)
-                Q.Cast(gapcloser.Sender);
-        }
-
         private static void Turretaggro(Obj_AI_Base sender, GameObjectAggroEventArgs args)
         {
             if (!W.IsReady())
@@ -232,7 +213,7 @@ namespace MightyLux
                      target.HasBuffOfType(BuffType.Snare) || target.HasBuffOfType(BuffType.Suppression) || target.HasBuffOfType(BuffType.Slow);
 
 
-            if (Config["combo"]["AutoQcc"].GetValue<MenuBool>().Value && Q.IsReady() && cc && Q.GetPrediction(target).Hitchance >= PredictionQ())
+            if (Config["combo"]["AutoQcc"].GetValue<MenuBool>().Value && Q.IsReady() && cc && Q.GetPrediction(target).Hitchance >= PredictionQ() && target.IsValidTarget(Q.Range))
                 Q.Cast(target);
         }
 
