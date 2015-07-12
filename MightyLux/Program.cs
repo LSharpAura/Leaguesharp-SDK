@@ -194,6 +194,17 @@ namespace MightyLux
                 Drawing.DrawText(pos1.X - 75, pos1.Y + 60, Color.LawnGreen, "Junglesteal Enabled");
         }
 
+        private static float AlliesInRange(Vector3 position, int range)
+        {
+            float allycount = 0;
+            var allies = GameObjects.AllyHeroes.Where(a => a.IsValid && a.Distance(position) < range).ToList();
+                        foreach (var ally in allies.Where(a => !a.IsDead))
+            {
+                allycount += 1;
+                            return allycount;
+            }
+           return allycount;
+        }
         private static void AutoQ()
         {
             if (!Q.IsReady())
@@ -558,7 +569,7 @@ namespace MightyLux
             return (float)dmg;
 
         }
-        private static double Overkillcheck(Obj_AI_Base target)
+        private static double Overkillcheck(Obj_AI_Hero target)
         {
             var passivedmg = 10 + (8 * Player.Level) + Player.FlatMagicDamageMod * 0.2 - target.FlatMagicReduction;
             var lichdmg = Player.CalculateDamage(target, DamageType.Magical,
@@ -577,6 +588,8 @@ namespace MightyLux
                 dmg += lichdmg;
             if (target.IsValidTarget(Player.GetRealAutoAttackRange()))
                 dmg += Player.GetAutoAttackDamage(target);
+            if (AlliesInRange(target.Position, 600) >= 1)
+                dmg += 100 + (3*Player.Level);
 
             return dmg;
         }
