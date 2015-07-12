@@ -55,14 +55,39 @@ namespace MightyLux
             Config.Add(new MenuSeparator("Mighty Lux", "Mighty Lux"));
             Bootstrap.Init(new string[] {});
 
-            var combo = Config.Add(new Menu("combo", "Combo Settings"));
-            combo.Add(new MenuSeparator("Combo Menu", "Combo Menu"));
-            combo.Add(new MenuBool("UseQ", "Use Q", true));
-            combo.Add(new MenuBool("UseE", "Use E", true));
-            combo.Add(new MenuBool("UseR", "Use R", true));
+            var spell = Config.Add(new Menu("spell", "Combo Settings"));
+            var combo = Config.Add(new Menu("combo", "Spell Settings"));
+
+            spell.Add(new MenuSeparator("Combo Menu", "Combo Menu"));
+            spell.Add(new MenuBool("UseQ", "Use Q", true));
+            spell.Add(new MenuBool("UseE", "Use E", true));
+            spell.Add(new MenuBool("UseR", "Use R", true));
+
+            combo.Add(new MenuSeparator("Advanced Q Settings", "Advanced Q Settings"));
+            combo.Add(new MenuBool("AutoQcc", "Auto [Q] on CC'd enemies", true));
+            combo.Add(new MenuBool("AutoQturret", "Auto [Q] under turret", false));
+            combo.Add(new MenuSeparator("Advanced W Settings", "Advanced W Settings"));
+            combo.Add(new MenuBool("AutoWturret", "Auto [W] on Turret Shots", true));
             combo.Add(new MenuSeparator("Advanced R Settings", "Advanced R Settings"));
-            combo.Add(new MenuBool("UseRF", "Use R Finisher", true));
-            combo.Add((new MenuBool("UseRKS", "Use R for Killstealing", true)));
+            combo.Add(new MenuKeyBind("forceR", "Semi-Manual [R] cast", Keys.R, KeyBindType.Press));
+            combo.Add(new MenuBool("UseRF", "Use [R] to Finish off enemies", true));
+            combo.Add((new MenuBool("useraoe", "Use [R] if it will hit X amount of Enemies", true)));
+            combo.Add((new MenuSlider("raoeslider", "Enemy Count", 4, 0, 5)));
+
+            combo.Add(new MenuSeparator("Killsteal Settings", "Killsteal Settings"));
+            combo.Add((new MenuBool("UseQKS", "Use [Q] for Killstealing", true)));
+            combo.Add((new MenuBool("UseRKS", "Use [R] for Killstealing", true)));
+            combo.Add(new MenuBool("UseEKS", "Use [E] for Killstealing", true));
+
+
+            //Prediction
+            combo.Add(new MenuSeparator("science", "Prediction Settings"));
+            combo.Add(new MenuList<string>("hitchanceQ", "[Q] Hitchance",
+                objects: new[] { "High", "Medium", "Low", "VeryHigh" }));
+            combo.Add(new MenuList<string>("hitchanceE", "[E] Hitchance",
+                objects: new[] { "High", "Medium", "Low", "VeryHigh" }));
+            combo.Add(new MenuList<string>("hitchanceR", "[R] Hitchance",
+                objects: new[] { "High", "Medium", "Low", "VeryHigh" }));
 
             var harass = Config.Add(new Menu("harass", "Harass Settings"));
             harass.Add(new MenuSeparator("Harass Menu", "Harass Menu"));
@@ -84,13 +109,11 @@ namespace MightyLux
 
             var jungle = Config.Add(new Menu("jungle", "Junglesteal Settings"));
             jungle.Add(new MenuSeparator("Jungle Settings", "Junglesteal Settings"));
-
             jungle.Add(new MenuKeyBind("toggle", "Junglesteal with [R] (TOGGLE)", Keys.K, KeyBindType.Toggle));
             jungle.Add(new MenuBool("blue", "Blue buff", true));
             jungle.Add(new MenuBool("red", "Red buff", true));
             jungle.Add(new MenuBool("dragon", "Dragon", true));
             jungle.Add(new MenuBool("baron", "Baron", true));
-
             jungle.Add(new MenuList<string>("jungleteam", "[BROKEN/NOT WORKING]", objects: new[] {"Enemy", "Ally"}));
 
             var drawing = Config.Add(new Menu("draw", "Draw Settings"));
@@ -102,25 +125,18 @@ namespace MightyLux
             drawing.Add(new MenuBool("disablee", "[E] draw", true));
             drawing.Add(new MenuBool("disabler", "[R] draw", true));
             drawing.Add(new MenuSeparator("Color Settings", "Color Settings"));
+
             //I'll call your parents if you copy this. KappaHD
             //Do you need an Onii-chan or a Senpai? Feel free to contact me on Skype: djkleeven
             drawing.Add(new MenuColor("drawq", "[Q] Range Draw Color", new ColorBGRA(32, 20, 10, 255)));
             drawing.Add(new MenuColor("draww", "[W] Range Draw Color", new ColorBGRA(32, 20, 10, 255)));
             drawing.Add(new MenuColor("drawe", "[E] Range Draw Color", new ColorBGRA(32, 20, 10, 255)));
             drawing.Add(new MenuColor("drawr", "[R] Range Draw Color", new ColorBGRA(32, 20, 10, 255)));
-
             drawing.Add(new MenuSeparator("Misc Drawings", "Misc Drawings"));
             drawing.Add(new MenuList<string>("dmgdrawmode", "Damage Indicator:",
                 objects: new[] {"SDK", "Text Based"}));
             drawing.Add(new MenuBool("orbmode", "Draw Active Orbwalk Mode", true));
 
-            combo.Add(new MenuSeparator("science", "Prediction Settings"));
-            combo.Add(new MenuList<string>("hitchanceQ", "[Q] Hitchance",
-                objects: new[] {"High", "Medium", "Low", "VeryHigh"}));
-            combo.Add(new MenuList<string>("hitchanceE", "[E] Hitchance",
-                objects: new[] {"High", "Medium", "Low", "VeryHigh"}));
-            combo.Add(new MenuList<string>("hitchanceR", "[R] Hitchance",
-                objects: new[] {"High", "Medium", "Low", "VeryHigh"}));
 
             Config.Add(new MenuButton("resetAll", "Settings", "Reset All Settings")
             {
@@ -137,9 +153,33 @@ namespace MightyLux
             Game.OnUpdate += OnUpdate;
             GameObject.OnDelete += GameObject_OnDelete;
             GameObject.OnCreate += GameObject_OnCreate;
+            Obj_AI_Turret.OnAggro += Turretaggro;
+            Obj_AI_Base.OnProcessSpellCast += TurretOnProcessSpellCast;
             Drawing.OnDraw += Ondraw;
             Drawing.OnDraw += DamageDrawing;
             Drawing.OnDraw += MiscDrawings;
+        }
+
+        private static void Turretaggro(Obj_AI_Base sender, GameObjectAggroEventArgs args)
+        {
+            if (!W.IsReady())
+                return;
+            if (sender.Target.IsMe && W.IsReady() && Config["combo"]["AutoWturret"].GetValue<MenuBool>().Value)
+                W.Cast(Game.CursorPos);
+        }
+
+        private static void TurretOnProcessSpellCast(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)
+        {
+            if (!W.IsReady())
+                return;
+
+            if (!args.Target.IsMe || sender.IsAlly || sender.IsMinion)
+                {
+                    return;
+                }
+
+            if (W.IsReady() && Config["combo"]["AutoWturret"].GetValue<MenuBool>().Value)
+                       W.Cast(Game.CursorPos);
         }
 
         private static void MiscDrawings(EventArgs args)
@@ -154,24 +194,60 @@ namespace MightyLux
                 Drawing.DrawText(pos1.X - 75, pos1.Y + 60, Color.LawnGreen, "Junglesteal Enabled");
         }
 
+        private static void AutoQ()
+        {
+            if (!Q.IsReady())
+                return;
+
+            var target = TargetSelector.GetTarget(Q.Range);
+            var cc = target.HasBuffOfType(BuffType.Knockup) || target.HasBuffOfType(BuffType.Stun) ||
+                     target.HasBuffOfType(BuffType.Snare) || target.HasBuffOfType(BuffType.Suppression);
+            var turret = target.IsUnderTurret(false);
+            if (Config["combo"]["AutoQcc"].GetValue<MenuBool>().Value && Q.IsReady() && cc && Q.GetPrediction(target).Hitchance >= PredictionQ())
+                Q.Cast(target);
+            if (Config["combo"]["AutoQturret"].GetValue<MenuBool>().Value && Q.IsReady() && turret && Q.GetPrediction(target).Hitchance >= PredictionQ())
+                Q.Cast(target);
+        }
+
+        private static void ForceR()
+        {
+            var target = TargetSelector.GetTarget(R.Range);
+            if (R.IsReady())
+                R.Cast(target);
+        }
+
+        private static void Killsteal()
+        {
+
+         foreach (var enemy in
+                  ObjectManager.Get<Obj_AI_Hero>().Where(
+                       ene => !ene.IsDead && ene.IsEnemy && ene.IsVisible && ene.Distance(Player.Position) <= R.Range))
+       {
+           var collision = Q.GetCollision(ObjectManager.Player.ServerPosition.ToVector2(),
+           new List<Vector2> { Q.GetPrediction(enemy).CastPosition.ToVector2() });
+           var getcollision = collision.Where(x => !(x is Obj_AI_Hero)).Count(x => x.IsMinion);
+
+           if (Config["combo"]["UseQKS"].GetValue<MenuBool>().Value && Q.IsReady() && enemy.Health < Qdmg(enemy) && getcollision <= 1 &&
+               Q.GetPrediction(enemy).Hitchance >= PredictionQ())
+               Q.Cast(enemy);
+
+           if (Config["combo"]["UseEKS"].GetValue<MenuBool>().Value && E.IsReady() && enemy.Health < Edmg(enemy) &&
+               E.GetPrediction(enemy).Hitchance >= PredictionE())
+               E.Cast(enemy);
+
+                if (Overkillcheck(enemy) > enemy.Health)
+                    return;
+
+                if (R.IsReady() && enemy.Health < Rdmg(enemy) && Config["combo"]["UseRKS"].GetValue<MenuBool>().Value &&
+                    R.GetPrediction(enemy).Hitchance >= PredictionR())
+                    R.Cast(enemy);
+            }  
+        }
         private static void RCast()
         {
             Ignite = Player.GetSpellSlot("summonerdot");
 
-            foreach (var enemy in
-                ObjectManager.Get<Obj_AI_Hero>()
-                    .Where(
-                        ene => !ene.IsDead && ene.IsEnemy && ene.IsVisible && ene.Distance(Player.Position) <= R.Range))
-            {
-                if (Overkillcheck(enemy) > enemy.Health)
-                    return;
-                if (R.IsReady() && enemy.Health < Rdmg(enemy) && Config["combo"]["UseRKS"].GetValue<MenuBool>().Value &&
-                    R.GetPrediction(enemy).Hitchance >= PredictionR())
-                    R.Cast(enemy);
-            }
-
             var target = TargetSelector.GetTarget(R.Range);
-
             if (Overkillcheck(target) > target.Health)
                 return;
 
@@ -183,6 +259,18 @@ namespace MightyLux
                 if (Rdmg(target) + Edmg(target) > target.Health && R.GetPrediction(target).Hitchance >= PredictionR() &&
                     LuxE.Position.Distance(target.Position) < 100)
                     R.Cast(target);
+            }
+            //Also check if enemy as a target works better () probably will work better I guess since you find the best enemy with the most hitcounts
+            foreach (var enemy in
+                ObjectManager.Get<Obj_AI_Hero>()
+                    .Where(
+                        ene => !ene.IsDead && ene.IsEnemy && ene.IsVisible && ene.Distance(Player.Position) <= R.Range))
+            {
+                if (Config["combo"]["useraoe"].GetValue<MenuBool>().Value)
+                {
+                    if (R.IsReady() && R.GetPrediction(enemy).Hitchance >= PredictionR() && R.GetPrediction(enemy).AoeHitCount >= Config["combo"]["raoeslider"].GetValue<MenuSlider>().Value)
+                        R.Cast(enemy);
+                }
             }
         }
 
@@ -331,17 +419,23 @@ namespace MightyLux
 
         private static void OnUpdate(EventArgs args)
         {
+            //ForceR
+            if (Config["combo"]["forceR"].GetValue<MenuKeyBind>().Active)
+            {
+                ForceR();
+            }
 
             switch (Orbwalker.ActiveMode)
             {
                 case OrbwalkerMode.Orbwalk:
                     ComboLogic();
-                    if (Config["combo"]["UseR"].GetValue<MenuBool>().Value)
+                    if (Config["spell"]["UseR"].GetValue<MenuBool>().Value)
                     {
                         RCast();
                     }
                     break;
                 case OrbwalkerMode.LastHit:
+                    Lasthit();
                     break;
                 case OrbwalkerMode.LaneClear:
                     Laneclear();
@@ -350,16 +444,38 @@ namespace MightyLux
                     ComboLogic();
                     break;
             }
-            if (Config["combo"]["UseR"].GetValue<MenuBool>().Value)
+            if (Config["spell"]["UseR"].GetValue<MenuBool>().Value)
+            {
                 RCast();
+            }
             if (Config["jungle"]["toggle"].GetValue<MenuKeyBind>().Active)
+            {
                 Junglesteal();
+            }
+            if (Q.IsReady() && Config["spell"]["UseQ"].GetValue<MenuBool>().Value)
+            {
+                AutoQ();
+            }
+            Killsteal();
         }
 
+        private static void Lasthit()
+        {
+            var aaminions = GameObjects.EnemyMinions.Where(m => m.IsValid && m.Distance(Player) < Player.GetRealAutoAttackRange()).ToList();
+            foreach (var minion in aaminions.Where(m => m.IsMinion && !m.IsDead && m.HasBuff("luxilluminatingfraulein")))
+            {
+                var passivedmg = 10 + (8 * Player.Level) + Player.FlatMagicDamageMod * 0.2 - minion.FlatMagicReduction + Player.GetAutoAttackDamage(minion);
+                if (minion.Health < passivedmg)
+                {
+                    Player.IssueOrder(GameObjectOrder.AutoAttack, minion);
+                    Player.IssueOrder(GameObjectOrder.AttackUnit, minion);
+                }
+            }
+        }
         private static void Laneclear()
         {
-
          var minions = GameObjects.EnemyMinions.Where(m => m.IsValid && m.Distance(Player) < E.Range).ToList();
+         var aaminions = GameObjects.EnemyMinions.Where(m => m.IsValid && m.Distance(Player) < Player.GetRealAutoAttackRange()).ToList();
          var efarmpos = E.GetCircularFarmLocation(new List<Obj_AI_Base>(minions), E.Width);
 
             if (Player.Level < Config["laneclear"]["lanelevel"].GetValue<MenuSlider>().Value || Player.ManaPercent <= Config["laneclear"]["lanemana"].GetValue<MenuSlider>().Value)
@@ -375,6 +491,16 @@ namespace MightyLux
             if (qfarmpos.MinionsHit >= Config["laneclear"]["laneclearQcount"].GetValue<MenuSlider>().Value &&
                 Q.IsReady() && Config["laneclear"]["laneQ"].GetValue<MenuBool>().Value)
                 Q.Cast(qfarmpos.Position);
+
+            foreach (var minion in aaminions.Where(m => m.IsMinion && !m.IsDead && m.HasBuff("luxilluminatingfraulein")))
+            {
+             var passivedmg = 10 + (8*Player.Level) + Player.FlatMagicDamageMod*0.2 - minion.FlatMagicReduction + Player.GetAutoAttackDamage(minion);
+                if (minion.Health < passivedmg)
+                {
+                    Player.IssueOrder(GameObjectOrder.AutoAttack, minion);
+                    Player.IssueOrder(GameObjectOrder.AttackUnit, minion);
+                }
+            }
 
         }
         private static double Rdmg(Obj_AI_Base target)
@@ -464,7 +590,7 @@ namespace MightyLux
                 new List<Vector2> {qprediction.CastPosition.ToVector2()});
             var getcollision = collision.Where(x => !(x is Obj_AI_Hero)).Count(x => x.IsMinion);
 
-            if ((Config["combo"]["UseQ"].GetValue<MenuBool>().Value && Orbwalker.ActiveMode != OrbwalkerMode.Hybrid))
+            if ((Config["spell"]["UseQ"].GetValue<MenuBool>().Value && Orbwalker.ActiveMode != OrbwalkerMode.Hybrid))
             {
                 if (Q.GetPrediction(target).Hitchance >= PredictionQ() && getcollision <= 1)
                     Q.Cast(target);
@@ -477,7 +603,7 @@ namespace MightyLux
             }
 
             //ECAST
-            if ((Config["combo"]["UseE"].GetValue<MenuBool>().Value) && Orbwalker.ActiveMode != OrbwalkerMode.Hybrid)
+            if ((Config["spell"]["UseE"].GetValue<MenuBool>().Value) && Orbwalker.ActiveMode != OrbwalkerMode.Hybrid)
             {
                 if (LuxE == null && E.IsReady() && E.GetPrediction(target).Hitchance >= PredictionE())
                     E.Cast(target);
