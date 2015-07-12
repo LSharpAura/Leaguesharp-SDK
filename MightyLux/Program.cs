@@ -66,6 +66,7 @@ namespace MightyLux
             combo.Add(new MenuSeparator("Advanced Q Settings", "Advanced Q Settings"));
             combo.Add(new MenuBool("AutoQcc", "Auto [Q] on CC'd enemies", true));
             combo.Add(new MenuBool("AutoQturret", "Auto [Q] under turret", false));
+            combo.Add(new MenuBool("antigap", "Auto [Q] on Gapclosers", false));
             combo.Add(new MenuSeparator("Advanced W Settings", "Advanced W Settings"));
             combo.Add(new MenuBool("AutoWturret", "Auto [W] on Turret Shots", true));
             combo.Add(new MenuSeparator("Advanced R Settings", "Advanced R Settings"));
@@ -153,11 +154,29 @@ namespace MightyLux
             Game.OnUpdate += OnUpdate;
             GameObject.OnDelete += GameObject_OnDelete;
             GameObject.OnCreate += GameObject_OnCreate;
+            AntiGapcloser.OnEnemyGapcloser += Antigap;
             Obj_AI_Turret.OnAggro += Turretaggro;
             Obj_AI_Base.OnProcessSpellCast += TurretOnProcessSpellCast;
             Drawing.OnDraw += Ondraw;
             Drawing.OnDraw += DamageDrawing;
             Drawing.OnDraw += MiscDrawings;
+        }
+
+        private static void Antigap(ActiveGapcloser gapcloser)
+        {
+            if (Player.IsDead || gapcloser.Sender.IsInvulnerable)
+                return;
+
+            var targetpos = Drawing.WorldToScreen(gapcloser.Sender.Position);
+            if (gapcloser.Sender.IsValidTarget(Q.Range) && Config["combo"]["antigap"].GetValue<MenuBool>().Value)
+            {
+                Drawing.DrawCircle(gapcloser.Sender.Position, gapcloser.Sender.BoundingRadius, System.Drawing.Color.DeepPink);
+                Drawing.DrawText(targetpos[0] - 40, targetpos[1] + 20, System.Drawing.Color.MediumPurple, "GAPCLOSER!");
+            }
+
+            if (Q.IsReady() && gapcloser.Sender.IsValidTarget(Q.Range) &&
+                Config["combo"]["antigap"].GetValue<MenuBool>().Value)
+                Q.Cast(gapcloser.Sender);
         }
 
         private static void Turretaggro(Obj_AI_Base sender, GameObjectAggroEventArgs args)
@@ -198,10 +217,9 @@ namespace MightyLux
         {
             float allycount = 0;
             var allies = GameObjects.AllyHeroes.Where(a => a.IsValid && a.Distance(position) < range).ToList();
-                        foreach (var ally in allies.Where(a => !a.IsDead))
+                        foreach (var ally in allies.Where(a => !a.IsDead && !a.IsMe))
             {
-                allycount += 1;
-                            return allycount;
+                allycount += 1; return allycount;
             }
            return allycount;
         }
