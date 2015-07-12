@@ -12,6 +12,7 @@ using LeagueSharp.SDK.Core.Wrappers;
 using LeagueSharp.SDK.Core.Events;
 using LeagueSharp.SDK.Core.Extensions.SharpDX;
 using LeagueSharp.SDK.Core.IDrawing;
+using LeagueSharp.SDK.Core.UI;
 using LeagueSharp.SDK.Core.UI.IMenu.Skins;
 using LeagueSharp.SDK.Core.Utils;
 using SharpDX;
@@ -90,12 +91,12 @@ namespace MightyLux
             jungle.Add(new MenuBool("dragon", "Dragon", true));
             jungle.Add(new MenuBool("baron", "Baron", true));
 
-            jungle.Add(new MenuList<string>("jungleteam", "[BROKEN/NOT WORKING]", objects: new[] { "Enemy", "Ally" }));
+            jungle.Add(new MenuList<string>("jungleteam", "[BROKEN/NOT WORKING]", objects: new[] {"Enemy", "Ally"}));
 
             var drawing = Config.Add(new Menu("draw", "Draw Settings"));
             drawing.Add(new MenuSeparator("Draw Menu", "Draw Menu"));
             drawing.Add(new MenuBool("disable", "Disable all drawings", false));
-            drawing.Add(new MenuList<string>("drawmode", "Drawing Mode:", objects: new[] { "Normal", "Custom"}));
+            drawing.Add(new MenuList<string>("drawmode", "Drawing Mode:", objects: new[] {"Normal", "Custom"}));
             drawing.Add(new MenuBool("disableq", "[Q] draw", true));
             drawing.Add(new MenuBool("disablew", "[W] draw", true));
             drawing.Add(new MenuBool("disablee", "[E] draw", true));
@@ -106,21 +107,25 @@ namespace MightyLux
             drawing.Add(new MenuColor("drawe", "[E] Range Draw Color", new ColorBGRA(32, 20, 10, 255)));
             drawing.Add(new MenuColor("drawr", "[R] Range Draw Color", new ColorBGRA(32, 20, 10, 255)));
             drawing.Add(new MenuSeparator("Misc Drawings", "Misc Drawings"));
-            drawing.Add(new MenuBool("dmg", "Draw Damage Amount", true));
-            drawing.Add(new MenuBool("dmg%", "Draw Damage % Amount", true));
+            drawing.Add(new MenuList<string>("dmgdrawmode", "Damage Indicator:",
+                objects: new[] {"Common", "Tekst Based"}));
             drawing.Add(new MenuBool("orbmode", "Draw Active Orbwalk Mode", true));
 
             combo.Add(new MenuSeparator("science", "Prediction Settings"));
-            combo.Add(new MenuList<string>("hitchanceQ", "[Q] Hitchance", objects: new[] { "High", "Medium", "Low", "VeryHigh" }));
-            combo.Add(new MenuList<string>("hitchanceE", "[E] Hitchance", objects: new[] { "High", "Medium", "Low", "VeryHigh" }));
-            combo.Add(new MenuList<string>("hitchanceR", "[R] Hitchance", objects: new[] { "High", "Medium", "Low", "VeryHigh" }));
+            combo.Add(new MenuList<string>("hitchanceQ", "[Q] Hitchance",
+                objects: new[] {"High", "Medium", "Low", "VeryHigh"}));
+            combo.Add(new MenuList<string>("hitchanceE", "[E] Hitchance",
+                objects: new[] {"High", "Medium", "Low", "VeryHigh"}));
+            combo.Add(new MenuList<string>("hitchanceR", "[R] Hitchance",
+                objects: new[] {"High", "Medium", "Low", "VeryHigh"}));
 
-          Config.Add(new MenuButton("resetAll", "Settings", "Reset All Settings")
-                    {Action = () =>
-                    {
-                        Config.RestoreDefault();
-                    }
-                    });
+            Config.Add(new MenuButton("resetAll", "Settings", "Reset All Settings")
+            {
+                Action = () =>
+                {
+                    Config.RestoreDefault();
+                }
+            });
 
             //Font
 
@@ -131,6 +136,19 @@ namespace MightyLux
             GameObject.OnCreate += GameObject_OnCreate;
             Drawing.OnDraw += Ondraw;
             Drawing.OnDraw += DamageDrawing;
+            Drawing.OnDraw += MiscDrawings;
+        }
+
+        private static void MiscDrawings(EventArgs args)
+        {
+            var pos1 = Drawing.WorldToScreen(Player.Position);
+            if (!Player.IsDead && Config["draw"]["orbmode"].GetValue<MenuBool>().Value)
+            {
+                Drawing.DrawText(pos1.X - 75, pos1.Y + 40, Color.Gold, "[Orbwalker Mode]:");
+                Drawing.DrawText(pos1.X + 60, pos1.Y + 40, Color.LawnGreen, Orbwalker.ActiveMode.ToString());
+            }
+            if (Config["jungle"]["toggle"].GetValue<MenuKeyBind>().Active)
+                Drawing.DrawText(pos1.X - 75, pos1.Y + 60, Color.LawnGreen, "Junglesteal Enabled");
         }
 
         private static void RCast()
@@ -138,11 +156,14 @@ namespace MightyLux
             Ignite = Player.GetSpellSlot("summonerdot");
 
             foreach (var enemy in
-                ObjectManager.Get<Obj_AI_Hero>().Where(ene => !ene.IsDead && ene.IsEnemy && ene.IsVisible && ene.Distance(Player.Position) <= R.Range))
+                ObjectManager.Get<Obj_AI_Hero>()
+                    .Where(
+                        ene => !ene.IsDead && ene.IsEnemy && ene.IsVisible && ene.Distance(Player.Position) <= R.Range))
             {
                 if (Overkillcheck(enemy) > enemy.Health)
                     return;
-                if (R.IsReady() && enemy.Health < Rdmg(enemy) && Config["combo"]["UseRKS"].GetValue<MenuBool>().Value && R.GetPrediction(enemy).Hitchance >= PredictionR())
+                if (R.IsReady() && enemy.Health < Rdmg(enemy) && Config["combo"]["UseRKS"].GetValue<MenuBool>().Value &&
+                    R.GetPrediction(enemy).Hitchance >= PredictionR())
                     R.Cast(enemy);
             }
 
@@ -159,94 +180,107 @@ namespace MightyLux
                 if (Rdmg(target) + Edmg(target) > target.Health && R.GetPrediction(target).Hitchance >= PredictionR() &&
                     LuxE.Position.Distance(target.Position) < 100)
                     R.Cast(target);
-            }            
+            }
         }
+
         private static void Junglesteal()
         {
-                    if (Config["jungle"]["blue"].GetValue<MenuBool>().Value) //
-                    {
-                        var blueBuff =
-                            ObjectManager.Get<Obj_AI_Minion>()
-                                .Where(x => x.BaseSkinName == "SRU_Blue")
-                                .Where(x => Rdmg(x) > x.Health)
-                                .FirstOrDefault(x => (x.IsAlly) || (x.IsEnemy));
+            if (Config["jungle"]["blue"].GetValue<MenuBool>().Value) //
+            {
+                var blueBuff =
+                    ObjectManager.Get<Obj_AI_Minion>()
+                        .Where(x => x.BaseSkinName == "SRU_Blue")
+                        .Where(x => Rdmg(x) > x.Health)
+                        .FirstOrDefault(x => (x.IsAlly) || (x.IsEnemy));
 
-                        if (blueBuff != null)
-                            R.Cast(blueBuff);
-                    }
+                if (blueBuff != null)
+                    R.Cast(blueBuff);
+            }
 
-                    if (Config["jungle"]["red"].GetValue<MenuBool>().Value) //
-                    {
-                        var redBuff =
-                            ObjectManager.Get<Obj_AI_Minion>()
-                                .Where(x => x.BaseSkinName == "SRU_Red")
-                                .Where(x => Rdmg(x) > x.Health)
-                                .FirstOrDefault(x => (x.IsAlly) || (x.IsEnemy));
+            if (Config["jungle"]["red"].GetValue<MenuBool>().Value) //
+            {
+                var redBuff =
+                    ObjectManager.Get<Obj_AI_Minion>()
+                        .Where(x => x.BaseSkinName == "SRU_Red")
+                        .Where(x => Rdmg(x) > x.Health)
+                        .FirstOrDefault(x => (x.IsAlly) || (x.IsEnemy));
 
-                        if (redBuff != null)
-                            R.Cast(redBuff);
-                    }
+                if (redBuff != null)
+                    R.Cast(redBuff);
+            }
 
-                    if (Config["jungle"]["baron"].GetValue<MenuBool>().Value) //
-                    {
-                        var Baron =
-                            ObjectManager.Get<Obj_AI_Minion>()
-                                .Where(x => x.BaseSkinName == "SRU_Baron")
-                                .Where(x => Rdmg(x) > x.Health)
-                                .FirstOrDefault(x => (x.IsAlly) || (x.IsEnemy));
+            if (Config["jungle"]["baron"].GetValue<MenuBool>().Value) //
+            {
+                var Baron =
+                    ObjectManager.Get<Obj_AI_Minion>()
+                        .Where(x => x.BaseSkinName == "SRU_Baron")
+                        .Where(x => Rdmg(x) > x.Health)
+                        .FirstOrDefault(x => (x.IsAlly) || (x.IsEnemy));
 
-                        if (Baron != null)
-                            R.Cast(Baron);
-                    }
+                if (Baron != null)
+                    R.Cast(Baron);
+            }
 
-                    if (Config["jungle"]["dragon"].GetValue<MenuBool>().Value) //
-                    {
-                        var Dragon =
-                            ObjectManager.Get<Obj_AI_Minion>()
-                                .Where(x => x.BaseSkinName == "SRU_Dragon")
-                                .Where(x => Rdmg(x) > x.Health)
-                                .FirstOrDefault(x => (x.IsAlly) || (x.IsEnemy));
+            if (Config["jungle"]["dragon"].GetValue<MenuBool>().Value) //
+            {
+                var Dragon =
+                    ObjectManager.Get<Obj_AI_Minion>()
+                        .Where(x => x.BaseSkinName == "SRU_Dragon")
+                        .Where(x => Rdmg(x) > x.Health)
+                        .FirstOrDefault(x => (x.IsAlly) || (x.IsEnemy));
 
-                        if (Dragon != null)
-                            R.Cast(Dragon);
-                    
+                if (Dragon != null)
+                    R.Cast(Dragon);
+
             }
         }
 
         private static void DamageDrawing(EventArgs args)
         {
-            var pos1 = Drawing.WorldToScreen(Player.Position);
+            var mode = Config["draw"]["dmgdrawmode"].GetValue<MenuList<string>>();
 
             if (Config["draw"]["disable"].GetValue<MenuBool>().Value)
                 return;
 
-            foreach (var enemy in
-                ObjectManager.Get<Obj_AI_Hero>().Where(ene => !ene.IsDead && ene.IsEnemy && ene.IsVisible))
+            switch (mode.Index)
             {
-                var percent = ComboDmgFull(enemy);
-                var percent2 = ComboDmgFull(enemy) * 100 / enemy.MaxHealth;
-                var pos = Drawing.WorldToScreen(enemy.Position);
+                case 0:
+                {
+                        DamageIndicator.DamageToUnit = ComboDmgFull;
+                        DamageIndicator.Color = Color.Aqua;
+                        DamageIndicator.Enabled = true;                   
+                    break;
+                }
+                case 1:
+                {
+                    
+                 DamageIndicator.Enabled = false;
 
-                if (Config["draw"]["dmg"].GetValue<MenuBool>().Value)
-                Drawing.DrawText(pos.X - 40, pos.Y + 20, System.Drawing.Color.Gold, "[" + percent.ToString("#.#") + "]" + " Combo Damage");
+                    foreach (var enemy in
+                        ObjectManager.Get<Obj_AI_Hero>().Where(ene => !ene.IsDead && ene.IsEnemy && ene.IsVisible))
+                    {
+                        var percent = ComboDmgFull(enemy);
+                        var percent2 = ComboDmgFull(enemy)*100/enemy.MaxHealth;
+                        var pos = Drawing.WorldToScreen(enemy.Position);
 
-                if (percent2 < enemy.HealthPercent && Config["draw"]["dmg%"].GetValue<MenuBool>().Value)
-                Drawing.DrawText(pos.X - 40, pos.Y + 35, System.Drawing.Color.LawnGreen, "[" + percent2.ToString("#.#") + "%] " + " Combo Damage");
-                if (percent2 > enemy.HealthPercent && Config["draw"]["dmg%"].GetValue<MenuBool>().Value)
-                    Drawing.DrawText(pos.X - 40, pos.Y + 35, System.Drawing.Color.LawnGreen, "[KILLABLE]");
+                        Drawing.DrawText(pos.X - 40, pos.Y + 20, System.Drawing.Color.Gold,
+                            "[" + percent.ToString("#.#") + "]" + " Combo Damage");
 
+                        if (percent2 < enemy.HealthPercent)
+                            Drawing.DrawText(pos.X - 40, pos.Y + 35, System.Drawing.Color.LawnGreen,
+                                "[" + percent2.ToString("#.#") + "%] " + " Combo Damage");
+                        if (percent2 > enemy.HealthPercent)
+                            Drawing.DrawText(pos.X - 40, pos.Y + 35, System.Drawing.Color.LawnGreen, "[KILLABLE]");
+                    }
+
+                    break;
+                    }
+                }
             }
 
-            if (!Player.IsDead && Config["draw"]["orbmode"].GetValue<MenuBool>().Value)
-            {
-                Drawing.DrawText(pos1.X - 75, pos1.Y + 40, Color.Gold, "[Orbwalker Mode]:");
-                Drawing.DrawText(pos1.X + 60, pos1.Y + 40, Color.LawnGreen, Orbwalker.ActiveMode.ToString());
-            }
-            if (Config["jungle"]["toggle"].GetValue<MenuKeyBind>().Active)
-                Drawing.DrawText(pos1.X - 75, pos1.Y + 60, Color.LawnGreen, "Junglesteal Enabled");
-        }
+        
 
-        private static void Ondraw(EventArgs args)
+    private static void Ondraw(EventArgs args)
         {
 
             var mode = Config["draw"]["drawmode"].GetValue<MenuList<string>>();
@@ -368,7 +402,7 @@ namespace MightyLux
                     new[] { 60, 110, 160, 210, 260 }[Program.Q.Level - 1] + 0.7 * Player.FlatMagicDamageMod);
         }
 
-        private static double ComboDmgFull(Obj_AI_Base target)
+        public static float ComboDmgFull(Obj_AI_Base target)
         {
             var passivedmg = 10 + (8 * Player.Level) + Player.FlatMagicDamageMod * 0.2 - target.FlatMagicReduction;
             var passiveaa = Player.GetAutoAttackDamage(Player) + passivedmg;
@@ -389,7 +423,7 @@ namespace MightyLux
             if (R.IsReady())
                 dmg += Rdmg(target);
 
-            return dmg;
+            return (float)dmg;
 
         }
         private static double Overkillcheck(Obj_AI_Base target)
