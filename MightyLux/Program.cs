@@ -102,10 +102,13 @@ namespace MightyLux
             drawing.Add(new MenuBool("disablee", "[E] draw", true));
             drawing.Add(new MenuBool("disabler", "[R] draw", true));
             drawing.Add(new MenuSeparator("Color Settings", "Color Settings"));
+            //I'll call your parents if you copy this. KappaHD
+            //Do you need an Onii-chan or a Senpai? Feel free to contact me on Skype: djkleeven
             drawing.Add(new MenuColor("drawq", "[Q] Range Draw Color", new ColorBGRA(32, 20, 10, 255)));
             drawing.Add(new MenuColor("draww", "[W] Range Draw Color", new ColorBGRA(32, 20, 10, 255)));
             drawing.Add(new MenuColor("drawe", "[E] Range Draw Color", new ColorBGRA(32, 20, 10, 255)));
             drawing.Add(new MenuColor("drawr", "[R] Range Draw Color", new ColorBGRA(32, 20, 10, 255)));
+
             drawing.Add(new MenuSeparator("Misc Drawings", "Misc Drawings"));
             drawing.Add(new MenuList<string>("dmgdrawmode", "Damage Indicator:",
                 objects: new[] {"SDK", "Text Based"}));
