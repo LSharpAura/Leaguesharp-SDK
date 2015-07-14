@@ -36,11 +36,11 @@ namespace MightyFiora
 
         private static void Main(string[] args)
         {
-            if (Player.ChampionName != "Fiora")
+            if (!Player.ChampionName.ToLower().Contains("fiora"))
                 return;
 
-            Load.OnLoad += OnLoad;
-
+                Load.OnLoad += OnLoad;
+            
         }
 
         private static void OnLoad(object sender, EventArgs e)

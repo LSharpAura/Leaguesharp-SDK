@@ -205,12 +205,9 @@ namespace MightyLux
         private static float AlliesInRange(Vector3 position, int range)
         {
             float allycount = 0;
-            var allies = GameObjects.AllyHeroes.Where(a => a.IsValid && a.Distance(position) < range).ToList();
-                        foreach (var ally in allies.Where(a => !a.IsDead && !a.IsMe))
-            {
-                allycount += 1; return allycount;
-            }
-           return allycount;
+            var allies = GameObjects.AllyHeroes.Where(a => a.IsValid && !a.IsMe && a.Distance(position) < range).ToList();
+
+            return allies.Count;
         }
         private static void AutoQ()
         {
