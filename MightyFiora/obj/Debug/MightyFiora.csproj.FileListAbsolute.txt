@@ -9,5 +9,6 @@ C:\Users\HAF911\Documents\GitHub\Leaguesharp-SDK\MightyFiora\bin\Release\Newtons
 C:\Users\HAF911\Documents\GitHub\Leaguesharp-SDK\MightyFiora\bin\Release\LeagueSharp.xml
 C:\Users\HAF911\Documents\GitHub\Leaguesharp-SDK\MightyFiora\bin\Release\Newtonsoft.Json.pdb
 C:\Users\HAF911\Documents\GitHub\Leaguesharp-SDK\MightyFiora\bin\Release\Newtonsoft.Json.xml
+C:\Users\HAF911\Documents\GitHub\Leaguesharp-SDK\MightyFiora\obj\Debug\MightyFiora.csprojResolveAssemblyReference.cache
 C:\Users\HAF911\Documents\GitHub\Leaguesharp-SDK\MightyFiora\obj\Debug\MightyFiora.exe
 C:\Users\HAF911\Documents\GitHub\Leaguesharp-SDK\MightyFiora\obj\Debug\MightyFiora.pdb
