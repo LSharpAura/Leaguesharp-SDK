@@ -143,7 +143,11 @@ namespace MightyFiora
 
                     var pos1 = Drawing.WorldToScreen(Player.Position);
                     var target = TargetSelector.GetTarget(2100);
+
+                          //RDMG please dont return 0 i'll fucking rek myself
                         Drawing.DrawText(pos1.X + 60, pos1.Y + 40, Color.LawnGreen, Rdmg(target).ToString());
+                         //Check if EnemiesInRange actually works.
+                        Drawing.DrawText(pos1.X + 60, pos1.Y + 60, Color.LawnGreen, EnemiesInRange(target.Position, 2000).ToString());
                     }
                     break;
                 }
@@ -164,6 +168,7 @@ namespace MightyFiora
         {
           var gapclose = Config["spell"]["qgapcloseonly"].GetValue<MenuBool>().Value;
             var gapcloserange = Config["spell"]["qgapcloserange"].GetValue<MenuSlider>().Value;
+
         //Q A E A HYDRA A Q A
         //Q A E A Hydra Q A A cause the slow action so Q can't use complete !
         //Q A E A A Q A Hydra A if have red buff
