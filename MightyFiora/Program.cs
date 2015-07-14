@@ -79,10 +79,6 @@ namespace MightyFiora
             spell.Add(new MenuBool("rAOE", "Auto [R] on X amount of Enemies", true));
             spell.Add((new MenuSlider("rcount", "Enemy Count", 4, 0, 5)));
 
-            spell.Add(new MenuSeparator("Killsteal Settings", "Killsteal Settings"));
-            spell.Add((new MenuBool("UseQKS", "Use [Q] for Killstealing", true)));
-            spell.Add((new MenuBool("UseRKS", "Use [R] for Killstealing", true)));
-
             var harass = Config.Add(new Menu("harass", "Harass Settings"));
             harass.Add(new MenuSeparator("Harass Menu", "Harass Menu"));
             harass.Add(new MenuBool("harrQ", "Use Q", true));
@@ -234,8 +230,9 @@ namespace MightyFiora
                     var pos2 = Drawing.WorldToScreen(targets.Position);
                     if (Config["draw"]["targets"].GetValue<MenuBool>().Value)
                     {
-                        Drawing.DrawCircle(targets.Position, targets.BoundingRadius + 50, Color.DarkRed);
-                        Drawing.DrawText(pos2.X, pos2.Y, Color.LawnGreen, "Selected Target");
+                        Drawing.DrawCircle(targets.Position, targets.BoundingRadius + 50, Color.Tomato);
+                        Drawing.DrawCircle(targets.Position, targets.BoundingRadius + 49, Color.DarkRed);
+                        Drawing.DrawText(pos2.X, pos2.Y, Color.LawnGreen, "Current Target");
                     }
 
 
