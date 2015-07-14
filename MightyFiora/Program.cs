@@ -27,14 +27,14 @@ namespace MightyFiora
 {
     //7/12/2015 whats left:
     // RLOGIC (enemy count check, r overkill check, r safety check, perhaps red buff combo? laneclear, lasthit and harass also jungle cause fiora jungle op amirite/????
-    class Program
+    internal class Program
     {
         public static Spell Q, W, E, R;
         public static Menu Config;
         public static float Q1, Q2, Lastaa;
         private static readonly Obj_AI_Hero Player = ObjectManager.Player;
 
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
             Load.OnLoad += OnLoad;
         }
@@ -48,7 +48,7 @@ namespace MightyFiora
 
             Config = new Menu("Mighty Fiora", "Mighty Fiora", true);
             Config.Add(new MenuSeparator("Mighty Fiora", "Mighty Fiora"));
-            Bootstrap.Init(new string[] { });
+            Bootstrap.Init(new string[] {});
 
             var combo = Config.Add(new Menu("combo", "Combo Settings"));
             var spell = Config.Add(new Menu("spell", "Spell Settings"));
@@ -71,17 +71,31 @@ namespace MightyFiora
             spell.Add(new MenuSlider("wdelay", "Cast Delay in Miliseconds", 80, 0, 1000));
             spell.Add(new MenuSeparator("Advanced R Settings", "Advanced R Settings"));
             spell.Add(new MenuBool("UseRF", "Use [R] Finisher", true));
-            spell.Add(new MenuBool("UseRdangerous", "Auto [R] on Dangerous", true));
-            spell.Add(new MenuBool("UseRaoe", "Auto [R] on X amount of Enemies", true));
+
+            spell.Add(new MenuBool("rhp", "Auto [R] on Dangerous", true));
+            spell.Add((new MenuSlider("rhp%", "Enemy Count", 30, 0, 100)));
+
+            spell.Add(new MenuBool("rAOE", "Auto [R] on X amount of Enemies", true));
             spell.Add((new MenuSlider("rcount", "Enemy Count", 4, 0, 5)));
+
             spell.Add(new MenuSeparator("Killsteal Settings", "Killsteal Settings"));
             spell.Add((new MenuBool("UseQKS", "Use [Q] for Killstealing", true)));
             spell.Add((new MenuBool("UseRKS", "Use [R] for Killstealing", true)));
 
+            var laneclear = Config.Add(new Menu("laneclear", "Laneclear Settings"));
+            laneclear.Add(new MenuSeparator("Laneclear Menu", "Laneclear Menu"));
+            laneclear.Add(new MenuBool("laneQ", "Use Q", true));
+            laneclear.Add(new MenuBool("laneE", "Use E", true));
+            laneclear.Add(new MenuSeparator("[Q] Settings", "[Q] Settings"));
+            laneclear.Add(new MenuBool("laneQL", "Only use Q for lasthitting", true));
+            laneclear.Add(new MenuSeparator("Misc Settings", "Misc Settings"));
+            laneclear.Add(new MenuSlider("lanemana", "Mana Percentage", 65, 0, 100));
+            laneclear.Add(new MenuSlider("lanelevel", "Don't use Abilities till level", 8, 0, 18));
+
             var drawing = Config.Add(new Menu("draw", "Draw Settings"));
             drawing.Add(new MenuSeparator("Draw Menu", "Draw Menu"));
             drawing.Add(new MenuBool("disable", "Disable all drawings", false));
-            drawing.Add(new MenuList<string>("drawmode", "Drawing Mode:", objects: new[] { "Normal", "Custom" }));
+            drawing.Add(new MenuList<string>("drawmode", "Drawing Mode:", objects: new[] {"Normal", "Custom"}));
             drawing.Add(new MenuBool("disableq", "[Q] draw", true));
             drawing.Add(new MenuBool("disableqp", "[Q] Gapclose draw", true));
             drawing.Add(new MenuBool("disablee", "[E] draw", true));
@@ -94,8 +108,14 @@ namespace MightyFiora
             drawing.Add(new MenuColor("drawqp", "[Q] Gapclose Draw Color", new ColorBGRA(125, 20, 10, 255)));
             drawing.Add(new MenuColor("drawe", "[E] Range Draw Color", new ColorBGRA(32, 20, 10, 255)));
             drawing.Add(new MenuColor("drawr", "[R] Range Draw Color", new ColorBGRA(32, 20, 10, 255)));
+            drawing.Add(new MenuSeparator("Misc Settings", "Misc Settings"));
+            drawing.Add(new MenuBool("dmgindic", "Damage Indicator", true));
+            drawing.Add(new MenuBool("targets", "Draw Selected Target", true));
+
+
 
             Config.Add(new MenuButton("resetAll", "Settings", "Reset All Settings")
+
             {
                 Action = () =>
                 {
@@ -108,9 +128,52 @@ namespace MightyFiora
             Obj_AI_Base.OnProcessSpellCast += OnProcessSpellCast;
             Orbwalker.OnAction += OnAction;
             Drawing.OnDraw += OnDraw;
+            Obj_AI_Hero.OnBuffRemove += Tiamat;
+            Obj_AI_Hero.OnBuffAdd += Qbuff;
 
         }
 
+        private static void Qbuff(Obj_AI_Base sender, Obj_AI_BaseBuffAddEventArgs args)
+        {
+            if (sender.IsMe && args.Buff.Name == "fioraqcd")
+            {
+                Q1 = 1;
+            }
+        }
+
+        private static void Tiamat(Obj_AI_Base sender, Obj_AI_BaseBuffRemoveEventArgs args)
+        {
+            if (sender.IsMe && args.Buff.Name == "fioraqcd")
+            {
+                Q1 = 0;
+
+                var target = TargetSelector.GetTarget(Q.Range*2);
+                if (target.IsValidTarget(280))
+                {
+                    Items.UseItem(3074);
+                    Items.UseItem(3077);
+                }
+            }
+
+        }
+
+        public static float Fullcombodmg(Obj_AI_Base target)
+        {
+            double dmg = 0;
+            var aa = Player.GetAutoAttackDamage(target);
+            if (Q.IsReady() && Q1 == 0)
+                dmg += aa + Qdmg(target) * 2;
+            if (Q.IsReady() && Q1 == 1)
+                dmg += aa + Qdmg(target);
+            if (E.IsReady())
+                dmg += aa;
+            if (Items.CanUseItem(3074) || Items.CanUseItem(3077))
+                dmg += aa + aa*0.60;
+            if (R.IsReady())
+                dmg += Rdmg(target);
+
+            return (float)dmg;
+        }
         private static void GapcloserMM()
         {
             //Minions and Heroes @Look at BMAkali
@@ -125,6 +188,7 @@ namespace MightyFiora
             {
                 case 0:
                 {
+                    var dtarget = TargetSelector.GetTarget(Q.Range * 2);
                     if (Q.Level >= 1 && Config["draw"]["disableq"].GetValue<MenuBool>().Value)
                         Drawing.DrawCircle(GameObjects.Player.Position, Q.Range,
                             Color.FromArgb((int) Config["draw"]["drawq"].GetValue<MenuColor>().Color));
@@ -142,26 +206,60 @@ namespace MightyFiora
                             Color.FromArgb((int) Config["draw"]["drawr"].GetValue<MenuColor>().Color));
 
                     var pos1 = Drawing.WorldToScreen(Player.Position);
-                    var target = TargetSelector.GetTarget(2100);
+                    var target = TargetSelector.GetTarget(float.MaxValue);
+                    var targets = TargetSelector.GetSelectedTarget();
+
+                    var pos2 = Drawing.WorldToScreen(target.Position);
+                    if (Config["draw"]["targets"].GetValue<MenuBool>().Value)
+                        Drawing.DrawCircle(targets.Position, targets.BoundingRadius + 50, Color.DarkRed);
 
                           //RDMG please dont return 0 i'll fucking rek myself
-                        Drawing.DrawText(pos1.X + 60, pos1.Y + 40, Color.LawnGreen, Rdmg(target).ToString());
+                       // Drawing.DrawText(pos1.X + 60, pos1.Y + 40, Color.LawnGreen, Rdmg(target).ToString());
                          //Check if EnemiesInRange actually works.
-                        Drawing.DrawText(pos1.X + 60, pos1.Y + 60, Color.LawnGreen, EnemiesInRange(target.Position, 2000).ToString());
+                        //Drawing.DrawText(pos1.X + 60, pos1.Y + 60, Color.LawnGreen, EnemiesInRange(target.Position, 2000).ToString());
+
+                    if (Config["draw"]["dmgindic"].GetValue<MenuBool>().Value)
+                    {
+                        DamageIndicator.DamageToUnit = Fullcombodmg;
+                        DamageIndicator.Color = Color.Aqua;
+                        DamageIndicator.Enabled = true;
                     }
+                    else
+                    {
+                        DamageIndicator.Enabled = false;
+                    }
+                }
                     break;
                 }
             }
-        
-        
 
+
+        private static void Laneclear()
+        {
+            var aaminions = GameObjects.EnemyMinions.Where(m => m.IsValid && m.Distance(Player) <= Q.Range 
+                ).ToList();
+
+            foreach (var m in aaminions.Where(m => m.IsMinion && !m.IsDead && !m.IsUnderTurret(true)))
+            {
+                //Killable cast 
+                if (m.Health < Qdmg(m) && !Player.IsWindingUp && !m.InAutoAttackRange() && Q.IsReady())
+                    Q.Cast(m);
+
+                //Randomcast
+                if (!Player.IsWindingUp && !m.InAutoAttackRange() && Q.IsReady())
+                    Q.Cast(m);
+
+                if (!Player.IsWindingUp && E.IsReady() && aaminions.Count >= 2)
+                    E.Cast();
+            }
+        }
         private static void ComboLogic() //wow such logic much amaze
         {
             var target = TargetSelector.GetTarget(Q.Range*2);
 
             KoreanCombo(target);
 
-            if (R.IsReady())
+            if (R.IsReady() && Config["combo"]["UseR"].GetValue<MenuBool>().Value)
                 Rlogic();
         }
         private static void KoreanCombo(Obj_AI_Hero target)
@@ -182,13 +280,21 @@ namespace MightyFiora
 
                 if (Q.IsReady() && Q1 == 0 && !gapclose)
                 {
+                    Orbwalker.ResetAutoAttackTimer();
                     Q.Cast(target);
                     Items.UseItem(3142);
+                    Player.IssueOrder(GameObjectOrder.AutoAttack, target);
                 }
-                if (Q1 == 1 && Player.Distance(target.Position) >= 350 && !gapclose && !Player.IsDashing()) //Some bugged shit up in this crib, Q isn't a dash? ok.
+                if (Q1 == 1 && Player.Distance(target.Position) >= 300 && !gapclose && !Player.IsDashing()) //Some bugged shit up in this crib, Q isn't a dash? ok.
                 {
                     Q.Cast(target);
                 }
+
+               // if (Q1 == 1 && Player.Distance(target.Position) > Player.GetRealAutoAttackRange() && !gapclose && !Player.IsDashing() 
+                  //  && target.FlatMovementSpeedMod > Player.FlatMovementSpeedMod && target.IsMoving && !target.IsFacing(Player))
+                //{
+                   // Q.Cast(target);
+                //}
             }
 
         }
@@ -196,14 +302,22 @@ namespace MightyFiora
         {
             float enemycount = 0;
             var enemies = GameObjects.EnemyHeroes.Where(a => a.IsValid && a.Distance(position) < range).ToList();
-            foreach (var enemy in enemies.Where(a => !a.IsDead && !a.IsMe))
+            foreach (var enemy in enemies.Where(a => !a.IsDead))
             {
                 enemycount += 1; return enemycount;
             }
             return enemycount;
         }
-        private static double Rdmg (Obj_AI_Hero target)
+
+        private static double Qdmg(Obj_AI_Base target)
         {
+            return
+               Player.CalculateDamage(target, DamageType.Physical,
+                     new[] { 40, 65, 90, 115, 140 }[Program.Q.Level - 1] + 0.6 * Player.FlatPhysicalDamageMod);
+        }
+        private static double Rdmg (Obj_AI_Base target)
+        {
+            var aa = Player.GetAutoAttackDamage(target);
             double dmg = 0;
             if (R.Level == 1)
             {
@@ -241,11 +355,21 @@ namespace MightyFiora
         {
             var target = TargetSelector.GetTarget(400);
 
-            if (Config["spells"]["UseRF"].GetValue<MenuBool>().Value)
+            if (Config["spell"]["UseRF"].GetValue<MenuBool>().Value)
             {
                 if (R.IsReady() && target.Health <= Rdmg(target)) //needs ignite check since you can check summoners in ult so ult + ignite kill is fine but if ult is enough no ignitos :3
                     R.Cast(target);
             }
+            var hpslider = Config["spell"]["rph%"].GetValue<MenuSlider>().Value;
+            var ecount = Config["spell"]["rcount"].GetValue<MenuSlider>().Value;
+            
+            if (Config["spell"]["rhp"].GetValue<MenuBool>().Value)
+            {
+                if (Player.HealthPercent <= hpslider && R.IsReady())
+                    R.Cast(target);
+            }
+            if (EnemiesInRange(target.Position, 400) >= ecount && Config["spell"]["rAOE"].GetValue<MenuBool>().Value)
+                R.Cast(target);
 
         }
         private static double Overkillcheck(Obj_AI_Hero target)
@@ -264,7 +388,7 @@ namespace MightyFiora
         private static void OnAction(object sender, Orbwalker.OrbwalkerActionArgs orbwalk)
         {
             var target = TargetSelector.GetTarget(Q.Range * 2);
-            if (!target.IsValidTarget())
+            if (Player.IsWindingUp)
                 return;
 
             var gapclose = Config["spell"]["qgapcloseonly"].GetValue<MenuBool>().Value;
@@ -286,19 +410,14 @@ namespace MightyFiora
             if (orbwalk.Type == OrbwalkerType.AfterAttack && Q1 == 0 && !Q.IsReady() && Orbwalker.ActiveMode == OrbwalkerMode.Orbwalk)
             {
                 E.Cast();
+                Orbwalker.ResetAutoAttackTimer();
                 Player.IssueOrder(GameObjectOrder.AutoAttack, target);
-            }
-            if (orbwalk.Type == OrbwalkerType.AfterAttack && Q1 == 0 && !E.IsReady() && !Q.IsReady() && Orbwalker.ActiveMode == OrbwalkerMode.Orbwalk)
-            {
-                Items.UseItem(3074);
-                Items.UseItem(3077);
             }
         }
         private static void OnProcessSpellCast(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs spell)
         {
             var delayvalue = Config["spell"]["wdelay"].GetValue<MenuSlider>().Value;
             //Simple [W] Logic
-            var target = TargetSelector.GetTarget(200);
             if (spell.SData.Name.ToLower().Contains("basicattack") && spell.Target.IsMe && !sender.IsMinion &&
                 sender.IsEnemy && !spell.SData.Name.ToLower().Contains("turret"))
                 DelayAction.Add(delayvalue, () => W.Cast());
@@ -307,19 +426,13 @@ namespace MightyFiora
             {
                 Q1 = 1;
             }
-            if (spell.SData.Name == "FioraQ" && Q1 == 1 && Player.HasBuff("fioraqcd"))
-            {
-                Items.UseItem(3074);
-                Items.UseItem(3077);
-                Player.IssueOrder(GameObjectOrder.AutoAttack, target);
-            }
-
             //AA reset [E]
             if (spell.SData.Name.Contains("FioraFlurry") || spell.SData.Name == "ItemTiamatCleave")
             {
                 Orbwalker.ResetAutoAttackTimer();
             }
-            if (spell.SData.Name.ToLower().Contains("fiorabasicattack") || spell.SData.Name.ToLower().Contains("fiorabasicattack2"))
+            if (spell.SData.Name.ToLower().Contains("fiorabasicattack") 
+                || spell.SData.Name.ToLower().Contains("fiorabasicattack2") || spell.SData.Name.ToLower().Contains("fioracrit"))
             {
                 Lastaa = Environment.TickCount;
             }
@@ -338,13 +451,10 @@ namespace MightyFiora
                 case OrbwalkerMode.LastHit:
                     break;
                 case OrbwalkerMode.LaneClear:
+                    Laneclear();
                     break;
                 case OrbwalkerMode.Hybrid:
                     break;
-            }
-            if (!Player.HasBuff("fioraqcd"))
-            {
-                Q1 = 0;
             }
         
         }
