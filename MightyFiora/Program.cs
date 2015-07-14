@@ -498,7 +498,6 @@ namespace MightyFiora
         }
         private static void OnUpdate(EventArgs args)
         {
-             Player.SetSkin(Player.BaseSkinName, 2);
 
             switch (Orbwalker.ActiveMode)
             {
