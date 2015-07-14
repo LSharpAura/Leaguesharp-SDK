@@ -36,8 +36,6 @@ namespace MightyFiora
 
         private static void Main(string[] args)
         {
-            if (!Player.ChampionName.ToLower().Contains("fiora"))
-                return;
 
                 Load.OnLoad += OnLoad;
             
@@ -54,7 +52,6 @@ namespace MightyFiora
 
             Config = new Menu("Mighty Fiora", "Mighty Fiora", true);
             Config.Add(new MenuSeparator("Mighty Fiora", "Mighty Fiora"));
-            Bootstrap.Init(new string[] {});
 
             var combo = Config.Add(new Menu("combo", "Combo Settings"));
             var spell = Config.Add(new Menu("spell", "Spell Settings"));
@@ -121,6 +118,8 @@ namespace MightyFiora
                     Config.RestoreDefault();
                 }
             });
+
+            Bootstrap.Init(new string[] { });
 
             Config.Attach();
             Game.OnUpdate += OnUpdate;
