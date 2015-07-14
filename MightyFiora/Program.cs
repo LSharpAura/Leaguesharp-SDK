@@ -140,17 +140,20 @@ namespace MightyFiora
                     if (R.Level >= 1 && Config["draw"]["disabler"].GetValue<MenuBool>().Value)
                         Drawing.DrawCircle(GameObjects.Player.Position, R.Range,
                             Color.FromArgb((int) Config["draw"]["drawr"].GetValue<MenuColor>().Color));
+
+                    var pos1 = Drawing.WorldToScreen(Player.Position);
+                    var target = TargetSelector.GetTarget(2100);
+                        Drawing.DrawText(pos1.X + 60, pos1.Y + 40, Color.LawnGreen, Rdmg(target).ToString());
+                    }
                     break;
                 }
             }
         
-        }
+        
 
         private static void ComboLogic() //wow such logic much amaze
         {
             var target = TargetSelector.GetTarget(Q.Range*2);
-            if (target != null)
-                return;
 
             KoreanCombo(target);
 
@@ -175,6 +178,7 @@ namespace MightyFiora
                 if (Q.IsReady() && Q1 == 0 && !gapclose)
                 {
                     Q.Cast(target);
+                    Items.UseItem(3142);
                 }
                 if (Q1 == 1 && Player.Distance(target.Position) >= 350 && !gapclose && !Player.IsDashing()) //Some bugged shit up in this crib, Q isn't a dash? ok.
                 {
@@ -195,20 +199,35 @@ namespace MightyFiora
         }
         private static double Rdmg (Obj_AI_Hero target)
         {
-            //needs ignite damage +++++++
             double dmg = 0;
-            var rdmg = Player.GetSpellDamage(target, SpellSlot.R);
-            var qdmg = Player.GetSpellDamage(target, SpellSlot.Q);
-            if (EnemiesInRange(target.Position, 400) < 1)
-                dmg += rdmg;
-            if (EnemiesInRange(target.Position, 400) == 1)
-                dmg += rdmg*0.60;
-            if (EnemiesInRange(target.Position, 400) == 2)
-                dmg += rdmg*0.60;
-            if (EnemiesInRange(target.Position, 400) >= 3)
-                dmg += rdmg*0.40;
-            if (Q.IsReady())
-                dmg += qdmg*2;
+            if (R.Level == 1)
+            {
+                var dmg1 = Player.CalculateDamage(target, DamageType.Physical, 125 + 0.9*Player.FlatPhysicalDamageMod);
+                dmg += dmg1 * (0.25 * (6 - EnemiesInRange(target.Position, 500)) + 1);
+                if (dmg > 320 && EnemiesInRange(target.Position, 500) < 1)
+                    dmg = 320;
+
+                return dmg;
+            }
+            if (R.Level == 2)
+            {
+                var dmg1 = Player.CalculateDamage(target, DamageType.Physical, 255 + 0.9 * Player.FlatPhysicalDamageMod);
+                dmg += dmg1 * (0.25 * (6 - EnemiesInRange(target.Position, 500)) + 1);
+                if (dmg > 660 && EnemiesInRange(target.Position, 500) < 1)
+                    dmg = 660;
+
+                return dmg;
+            }
+            if (R.Level == 3)
+            {
+                var dmg1 = Player.CalculateDamage(target, DamageType.Physical, 385 + 0.9 * Player.FlatPhysicalDamageMod);
+                dmg += dmg1*(0.25 * (6 - EnemiesInRange(target.Position, 500)) + 1);
+
+                if (dmg > 1000 && EnemiesInRange(target.Position, 500) < 1)
+                    dmg = 1000;
+
+                return dmg;
+            }
 
             return dmg;
         }
@@ -217,7 +236,7 @@ namespace MightyFiora
         {
             var target = TargetSelector.GetTarget(400);
 
-            if (target.Health >= Overkillcheck(target) && Config["spells"]["UseRF"].GetValue<MenuBool>().Value)
+            if (Config["spells"]["UseRF"].GetValue<MenuBool>().Value)
             {
                 if (R.IsReady() && target.Health <= Rdmg(target)) //needs ignite check since you can check summoners in ult so ult + ignite kill is fine but if ult is enough no ignitos :3
                     R.Cast(target);
@@ -233,22 +252,8 @@ namespace MightyFiora
             var qdmg = Player.GetSpellDamage(target, SpellSlot.Q);
             var aa = Player.GetAutoAttackDamage(target);
 
-            //#worth
-            if (EnemiesInRange(target.Position, 800) <= 2 && Player.HealthPercent >= 35)
-            {
-                if (Q.IsReady())
-                    dmg += qdmg*2 + aa;
-                if (E.IsReady())
-                    dmg += aa;
-                if (tiamat || hydra)
-                    dmg += aa*0.60;
-                if (Player.FlatCritChanceMod > 30)
-                    dmg += aa*1.5;
-                return dmg;
-            }
-
-
-            return dmg;
+            //Shit ain't done yet mate.
+            return 100;
 
         }
         private static void OnAction(object sender, Orbwalker.OrbwalkerActionArgs orbwalk)
@@ -262,6 +267,7 @@ namespace MightyFiora
             if (orbwalk.Type == OrbwalkerType.AfterAttack && Q1 == 1 && Orbwalker.ActiveMode == OrbwalkerMode.Orbwalk)
             {
                 E.Cast();
+                Player.IssueOrder(GameObjectOrder.AutoAttack, target);
             }
             if (orbwalk.Type == OrbwalkerType.AfterAttack && Q1 == 1 && Orbwalker.ActiveMode == OrbwalkerMode.Orbwalk && !E.IsReady())
             {
@@ -270,10 +276,12 @@ namespace MightyFiora
             if (Q1 == 0 && !E.IsReady() && Orbwalker.ActiveMode == OrbwalkerMode.Orbwalk && Qcast2() && orbwalk.Type == OrbwalkerType.AfterAttack && !gapclose)
             {
                 Q.Cast(target);
+                Player.IssueOrder(GameObjectOrder.AutoAttack, target);
             }
             if (orbwalk.Type == OrbwalkerType.AfterAttack && Q1 == 0 && !Q.IsReady() && Orbwalker.ActiveMode == OrbwalkerMode.Orbwalk)
             {
                 E.Cast();
+                Player.IssueOrder(GameObjectOrder.AutoAttack, target);
             }
             if (orbwalk.Type == OrbwalkerType.AfterAttack && Q1 == 0 && !E.IsReady() && !Q.IsReady() && Orbwalker.ActiveMode == OrbwalkerMode.Orbwalk)
             {
@@ -285,6 +293,7 @@ namespace MightyFiora
         {
             var delayvalue = Config["spell"]["wdelay"].GetValue<MenuSlider>().Value;
             //Simple [W] Logic
+            var target = TargetSelector.GetTarget(200);
             if (spell.SData.Name.ToLower().Contains("basicattack") && spell.Target.IsMe && !sender.IsMinion &&
                 sender.IsEnemy && !spell.SData.Name.ToLower().Contains("turret"))
                 DelayAction.Add(delayvalue, () => W.Cast());
@@ -292,6 +301,12 @@ namespace MightyFiora
             if (spell.SData.Name == "FioraQ")
             {
                 Q1 = 1;
+            }
+            if (spell.SData.Name == "FioraQ" && Q1 == 1 && Player.HasBuff("fioraqcd"))
+            {
+                Items.UseItem(3074);
+                Items.UseItem(3077);
+                Player.IssueOrder(GameObjectOrder.AutoAttack, target);
             }
 
             //AA reset [E]
