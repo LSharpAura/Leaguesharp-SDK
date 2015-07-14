@@ -15,6 +15,7 @@ using LeagueSharp.SDK.Core.Extensions.SharpDX;
 using LeagueSharp.SDK.Core.IDrawing;
 using LeagueSharp.SDK.Core.UI;
 using LeagueSharp.SDK.Core.UI.IMenu.Skins;
+using LeagueSharp.SDK.Core.UI.INotifications;
 using LeagueSharp.SDK.Core.Utils;
 using SharpDX;
 using SharpDX.Direct3D9;
@@ -28,7 +29,8 @@ namespace MightyLux
 {
     internal class Program
     {
-        public static Font LuxFont;
+        public static Notification KillableR;
+        public static Notification Loaded;
         public static Spell Q, W, E, R;
         public static Menu Config;
         private static readonly Obj_AI_Hero Player = ObjectManager.Player;
@@ -38,6 +40,7 @@ namespace MightyLux
         private static void Main(string[] args)
         {
             Load.OnLoad += OnLoad;
+            //var killable = GameObjects.EnemyHeroes.Where(m => m.Health d<= Rdmg(m) && !m.IsDead).ToList();
         }
 
         private static void OnLoad(object sender, EventArgs e)
@@ -150,6 +153,7 @@ namespace MightyLux
 
 
             Config.Attach();
+            Dash.OnDash += AntiGapcloser;
             Game.OnUpdate += OnUpdate;
             GameObject.OnDelete += GameObject_OnDelete;
             GameObject.OnCreate += GameObject_OnCreate;
@@ -158,6 +162,11 @@ namespace MightyLux
             Drawing.OnDraw += Ondraw;
             Drawing.OnDraw += DamageDrawing;
             Drawing.OnDraw += MiscDrawings;
+        }
+
+        private static void AntiGapcloser(object sender, Dash.DashArgs e)
+        {
+            throw new NotImplementedException();
         }
         private static void Turretaggro(Obj_AI_Base sender, GameObjectAggroEventArgs args)
         {

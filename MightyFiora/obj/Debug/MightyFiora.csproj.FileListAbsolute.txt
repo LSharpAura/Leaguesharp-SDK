@@ -1,0 +1,13 @@
+c:\users\haf911\documents\visual studio 2013\Projects\MightyFiora\MightyFiora\bin\Release\MightyFiora.exe.config
+c:\users\haf911\documents\visual studio 2013\Projects\MightyFiora\MightyFiora\bin\Release\MightyFiora.exe
+c:\users\haf911\documents\visual studio 2013\Projects\MightyFiora\MightyFiora\bin\Release\MightyFiora.pdb
+c:\users\haf911\documents\visual studio 2013\Projects\MightyFiora\MightyFiora\bin\Release\LeagueSharp.dll
+c:\users\haf911\documents\visual studio 2013\Projects\MightyFiora\MightyFiora\bin\Release\LeagueSharp.SDK.dll
+c:\users\haf911\documents\visual studio 2013\Projects\MightyFiora\MightyFiora\bin\Release\SharpDX.Direct3D9.dll
+c:\users\haf911\documents\visual studio 2013\Projects\MightyFiora\MightyFiora\bin\Release\SharpDX.dll
+c:\users\haf911\documents\visual studio 2013\Projects\MightyFiora\MightyFiora\bin\Release\Newtonsoft.Json.dll
+c:\users\haf911\documents\visual studio 2013\Projects\MightyFiora\MightyFiora\bin\Release\LeagueSharp.xml
+c:\users\haf911\documents\visual studio 2013\Projects\MightyFiora\MightyFiora\bin\Release\Newtonsoft.Json.pdb
+c:\users\haf911\documents\visual studio 2013\Projects\MightyFiora\MightyFiora\bin\Release\Newtonsoft.Json.xml
+c:\users\haf911\documents\visual studio 2013\Projects\MightyFiora\MightyFiora\obj\Debug\MightyFiora.exe
+c:\users\haf911\documents\visual studio 2013\Projects\MightyFiora\MightyFiora\obj\Debug\MightyFiora.pdb
