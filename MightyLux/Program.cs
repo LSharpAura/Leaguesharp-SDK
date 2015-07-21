@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Media;
 using System.Windows.Forms;
 using LeagueSharp;
 using LeagueSharp.SDK.Core;
@@ -27,7 +28,7 @@ namespace MightyLux
             Load.OnLoad += OnLoad;
             //var killable = GameObjects.EnemyHeroes.Where(m => m.Health d<= Rdmg(m) && !m.IsDead).ToList();
         }
-
+        public static SoundPlayer welcome = new SoundPlayer(Properties.Resources.welcome1);
         public static void OnLoad(object sender, EventArgs e)
         {
             Q = new Spell(SpellSlot.Q, 1175);
@@ -104,8 +105,14 @@ namespace MightyLux
             jungle.Add(new MenuBool("baron", "Baron", true));
             jungle.Add(new MenuList<string>("jungleteam", "[BROKEN/NOT WORKING]",  new[] {"Enemy", "Ally"}));
 
-           // var misc = Config.Add(new Menu("misc", "Misc Settings"));
-           // misc.Add(new MenuSeparator("sound1", "Welcome Sound Effect"));
+            var misc = Config.Add(new Menu("misc", "Sound Settings"));
+            misc.Add(new MenuSeparator("sound", "Sound Settings"));
+            misc.Add(new MenuBool("rsound", "Enable [R] Cast Sound Effect", true));
+
+
+
+
+
             var drawing = Config.Add(new Menu("draw", "Draw Settings"));
             var utility = Config.Add(new Menu("util", "Utility Drawings"));
             drawing.Add(new MenuSeparator("Draw Menu", "Draw Menu"));
@@ -148,7 +155,6 @@ namespace MightyLux
 
 
             Config.Attach();
-         
             //Drawings.DrawEvent();
             Dash.OnDash += AntiGapcloser;
             Game.OnUpdate += OnUpdate;
@@ -247,10 +253,15 @@ namespace MightyLux
                 if (Overkillcheck(enemy) > enemy.Health)
                     return;
 
-                if (R.IsReady() && enemy.Health < Rdmg(enemy) && Config["combo"]["UseRKS"].GetValue<MenuBool>().Value &&
-                    R.GetPrediction(enemy).Hitchance >= PredictionR())
-                    R.Cast(enemy);
-            }  
+           if (R.IsReady() && enemy.Health < Rdmg(enemy) && Config["combo"]["UseRKS"].GetValue<MenuBool>().Value &&
+               R.GetPrediction(enemy).Hitchance >= PredictionR())
+           {
+               R.Cast(enemy);
+               if (Config["misc"]["rsound"].GetValue<MenuBool>().Value)
+               Soundplayer.PlaySound(welcome);
+           }
+
+       }  
         }
         public static void RCast()
         {
@@ -263,11 +274,11 @@ namespace MightyLux
             if (Config["combo"]["UseRF"].GetValue<MenuBool>().Value)
             {
                 if (Rdmg(target) > target.Health && R.GetPrediction(target).Hitchance >= PredictionR())
+                {
                     R.Cast(target);
-
-                if (Rdmg(target) + Edmg(target) > target.Health && R.GetPrediction(target).Hitchance >= PredictionR() &&
-                    LuxE.Position.Distance(target.Position) < 100)
-                    R.Cast(target);
+                    if (Config["misc"]["rsound"].GetValue<MenuBool>().Value)
+                    Soundplayer.PlaySound(welcome);
+                }
             }
             //Also check if enemy as a target works better () probably will work better I guess since you find the best enemy with the most hitcounts
             foreach (var enemy in
@@ -277,8 +288,13 @@ namespace MightyLux
             {
                 if (Config["combo"]["useraoe"].GetValue<MenuBool>().Value)
                 {
-                    if (R.IsReady() && R.GetPrediction(enemy).Hitchance >= PredictionR() && R.GetPrediction(enemy).AoeHitCount >= Config["combo"]["raoeslider"].GetValue<MenuSlider>().Value)
+                    if (R.IsReady() && R.GetPrediction(enemy).Hitchance >= PredictionR() &&
+                        R.GetPrediction(enemy).AoeHitCount >= Config["combo"]["raoeslider"].GetValue<MenuSlider>().Value)
+                    {
                         R.Cast(enemy);
+                        if (Config["misc"]["rsound"].GetValue<MenuBool>().Value)
+                        Soundplayer.PlaySound(welcome);
+                    }
                 }
             }
         }
@@ -549,18 +565,20 @@ namespace MightyLux
             if (Config["harass"]["harrE"].GetValue<MenuBool>().Value && Player.ManaPercent >= Config["harass"]["harassmana"].GetValue<MenuSlider>().Value 
                 && Orbwalker.ActiveMode != OrbwalkerMode.Orbwalk)
             {
-                if (target.HasBuff("luxilluminatingfraulein") && target.HasBuff("LuxLightBindingMis") &&
-                    Player.Distance(target.Position) <= Player.GetRealAutoAttackRange())
-                    return;
-
-                if (Exist == 1 && target.Distance(LuxE.Position) <= 275)
-                    E.Cast();
 
                 if (Q.GetPrediction(target).Hitchance >= PredictionQ() && getcollision <= 1 && Q.IsReady())
                     return;
 
                 if (Exist == 0 && E.IsReady() && E.GetPrediction(target).Hitchance >= PredictionE())
+                {
                     E.Cast(target);
+                }
+                if (target.HasBuff("luxilluminatingfraulein") && target.HasBuff("LuxLightBindingMis") &&
+                 Player.Distance(target.Position) <= Player.GetRealAutoAttackRange())
+                    return;
+
+                if (Exist == 1 && target.Distance(LuxE.Position) <= LuxE.BoundingRadius)
+                    E.Cast();
 
             }
         }
@@ -588,7 +606,7 @@ namespace MightyLux
                     Player.Distance(target.Position) <= Player.GetRealAutoAttackRange())
                     return;
 
-                if (Exist == 1 && target.Distance(LuxE.Position) <= 275)
+                if (Exist == 1 && target.Distance(LuxE.Position) <= LuxE.BoundingRadius)
                     E.Cast();
 
                 if (Q.GetPrediction(target).Hitchance >= PredictionQ() && getcollision <= 1 && Q.IsReady())

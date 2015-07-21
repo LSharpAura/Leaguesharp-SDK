@@ -16,6 +16,6 @@ namespace MightyLux.Helpers
         public static GameObject LuxE;
         public static SpellSlot Ignite;
         public static int Exist;
-        public static SoundPlayer welcome = new SoundPlayer(Properties.Resources.welcome1);
+        public static int Start;
     }
 }
