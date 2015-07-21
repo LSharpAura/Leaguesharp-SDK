@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using System.Runtime.Remoting.Channels;
 using System.Windows.Forms;
 using LeagueSharp;
 using LeagueSharp.SDK.Core;
@@ -12,14 +10,9 @@ using LeagueSharp.SDK.Core.UI.IMenu.Values;
 using LeagueSharp.SDK.Core.Wrappers;
 using LeagueSharp.SDK.Core.Events;
 using LeagueSharp.SDK.Core.Extensions.SharpDX;
-using LeagueSharp.SDK.Core.IDrawing;
-using LeagueSharp.SDK.Core.UI;
-using LeagueSharp.SDK.Core.UI.IMenu.Skins;
-using LeagueSharp.SDK.Core.UI.INotifications;
 using LeagueSharp.SDK.Core.Utils;
+using MightyLux.Helpers;
 using SharpDX;
-using SharpDX.Direct3D9;
-using Font = SharpDX.Direct3D9.Font;
 
 using Color = System.Drawing.Color;
 using Menu = LeagueSharp.SDK.Core.UI.IMenu.Menu;
@@ -27,23 +20,15 @@ using Menu = LeagueSharp.SDK.Core.UI.IMenu.Menu;
 
 namespace MightyLux
 {
-    internal class Program
+    public class Program : Statics
     {
-        public static Notification KillableR;
-        public static Notification Loaded;
-        public static Spell Q, W, E, R;
-        public static Menu Config;
-        private static readonly Obj_AI_Hero Player = ObjectManager.Player;
-        public static GameObject LuxE;
-        private static SpellSlot Ignite;
-
-        private static void Main(string[] args)
+        public static void Main(string[] args)
         {
             Load.OnLoad += OnLoad;
             //var killable = GameObjects.EnemyHeroes.Where(m => m.Health d<= Rdmg(m) && !m.IsDead).ToList();
         }
 
-        private static void OnLoad(object sender, EventArgs e)
+        public static void OnLoad(object sender, EventArgs e)
         {
             Q = new Spell(SpellSlot.Q, 1175);
             W = new Spell(SpellSlot.W, 1075);
@@ -117,12 +102,15 @@ namespace MightyLux
             jungle.Add(new MenuBool("red", "Red buff", true));
             jungle.Add(new MenuBool("dragon", "Dragon", true));
             jungle.Add(new MenuBool("baron", "Baron", true));
-            jungle.Add(new MenuList<string>("jungleteam", "[BROKEN/NOT WORKING]", objects: new[] {"Enemy", "Ally"}));
+            jungle.Add(new MenuList<string>("jungleteam", "[BROKEN/NOT WORKING]",  new[] {"Enemy", "Ally"}));
 
+            var misc = Config.Add(new Menu("misc", "Misc Settings"));
+            misc.Add(new MenuSeparator("sound1", "Welcome Sound Effect"));
             var drawing = Config.Add(new Menu("draw", "Draw Settings"));
+            var utility = Config.Add(new Menu("util", "Utility Drawings"));
             drawing.Add(new MenuSeparator("Draw Menu", "Draw Menu"));
             drawing.Add(new MenuBool("disable", "Disable all drawings", false));
-            drawing.Add(new MenuList<string>("drawmode", "Drawing Mode:", objects: new[] {"Normal", "Custom"}));
+            drawing.Add(new MenuList<string>("drawmode", "Drawing Mode:",  new[] {"Normal", "Custom"}));
             drawing.Add(new MenuBool("disableq", "[Q] draw", true));
             drawing.Add(new MenuBool("disablew", "[W] draw", true));
             drawing.Add(new MenuBool("disablee", "[E] draw", true));
@@ -135,10 +123,15 @@ namespace MightyLux
             drawing.Add(new MenuColor("draww", "[W] Range Draw Color", new ColorBGRA(32, 20, 10, 255)));
             drawing.Add(new MenuColor("drawe", "[E] Range Draw Color", new ColorBGRA(32, 20, 10, 255)));
             drawing.Add(new MenuColor("drawr", "[R] Range Draw Color", new ColorBGRA(32, 20, 10, 255)));
-            drawing.Add(new MenuSeparator("Misc Drawings", "Misc Drawings"));
-            drawing.Add(new MenuList<string>("dmgdrawmode", "Damage Indicator:",
-                objects: new[] {"SDK", "Text Based"}));
-            drawing.Add(new MenuBool("orbmode", "Draw Active Orbwalk Mode", true));
+
+
+            utility.Add(new MenuSeparator("Utility Drawings", "Utility Drawings"));
+
+            utility.Add(new MenuList<string>("dmgdrawer", "Damage Indicator",  new[] { "Custom", "SDK" }));
+            utility.Add(new MenuColor("dmgcolor", "Damage Indicator Color", new ColorBGRA(32, 155, 120, 255)));
+            utility.Add(new MenuBool("HUD", "Heads-Up Display", true));
+            utility.Add(new MenuBool("indicator", "Enemy Indicator", true));
+            utility.Add(new MenuBool("orbmode", "Draw Active Orbwalk Mode", true));
 
 
             Config.Add(new MenuButton("resetAll", "Settings", "Reset All Settings")
@@ -153,22 +146,23 @@ namespace MightyLux
 
 
             Config.Attach();
+         
+            //Drawings.DrawEvent();
             Dash.OnDash += AntiGapcloser;
             Game.OnUpdate += OnUpdate;
             GameObject.OnDelete += GameObject_OnDelete;
             GameObject.OnCreate += GameObject_OnCreate;
             Obj_AI_Turret.OnAggro += Turretaggro;
             Obj_AI_Base.OnProcessSpellCast += TurretOnProcessSpellCast;
-            Drawing.OnDraw += Ondraw;
-            Drawing.OnDraw += DamageDrawing;
             Drawing.OnDraw += MiscDrawings;
+            Drawings.DrawEvent();
         }
 
-        private static void AntiGapcloser(object sender, Dash.DashArgs e)
+        public static void AntiGapcloser(object sender, Dash.DashArgs e)
         {
             throw new NotImplementedException();
         }
-        private static void Turretaggro(Obj_AI_Base sender, GameObjectAggroEventArgs args)
+        public static void Turretaggro(Obj_AI_Base sender, GameObjectAggroEventArgs args)
         {
             if (!W.IsReady())
                 return;
@@ -176,7 +170,7 @@ namespace MightyLux
                 W.Cast(Game.CursorPos);
         }
 
-        private static void TurretOnProcessSpellCast(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)
+        public static void TurretOnProcessSpellCast(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)
         {
             if (!W.IsReady())
                 return;
@@ -190,10 +184,10 @@ namespace MightyLux
                        W.Cast(Game.CursorPos);
         }
 
-        private static void MiscDrawings(EventArgs args)
+        public static void MiscDrawings(EventArgs args)
         {
             var pos1 = Drawing.WorldToScreen(Player.Position);
-            if (!Player.IsDead && Config["draw"]["orbmode"].GetValue<MenuBool>().Value)
+            if (!Player.IsDead && Config["util"]["orbmode"].GetValue<MenuBool>().Value)
             {
                 Drawing.DrawText(pos1.X - 75, pos1.Y + 40, Color.Gold, "[Orbwalker Mode]:");
                 Drawing.DrawText(pos1.X + 60, pos1.Y + 40, Color.LawnGreen, Orbwalker.ActiveMode.ToString());
@@ -202,14 +196,13 @@ namespace MightyLux
                 Drawing.DrawText(pos1.X - 75, pos1.Y + 60, Color.LawnGreen, "Junglesteal Enabled");
         }
 
-        private static float AlliesInRange(Vector3 position, int range)
+        public static float AlliesInRange(Vector3 position, int range)
         {
-            float allycount = 0;
             var allies = GameObjects.AllyHeroes.Where(a => a.IsValid && !a.IsMe && a.Distance(position) < range).ToList();
 
             return allies.Count;
         }
-        private static void AutoQ()
+        public static void AutoQ()
         {
             if (!Q.IsReady())
                 return;
@@ -223,14 +216,14 @@ namespace MightyLux
                 Q.Cast(target);
         }
 
-        private static void ForceR()
+        public static void ForceR()
         {
             var target = TargetSelector.GetTarget(R.Range);
             if (R.IsReady())
                 R.Cast(target);
         }
 
-        private static void Killsteal()
+        public static void Killsteal()
         {
 
          foreach (var enemy in
@@ -257,7 +250,7 @@ namespace MightyLux
                     R.Cast(enemy);
             }  
         }
-        private static void RCast()
+        public static void RCast()
         {
             Ignite = Player.GetSpellSlot("summonerdot");
 
@@ -288,7 +281,7 @@ namespace MightyLux
             }
         }
 
-        private static void Junglesteal()
+        public static void Junglesteal()
         {
             if (Config["jungle"]["blue"].GetValue<MenuBool>().Value) //
             {
@@ -338,100 +331,30 @@ namespace MightyLux
                     R.Cast(Dragon);
 
             }
-        }
+        }     
 
-        private static void DamageDrawing(EventArgs args)
-        {
-            var mode = Config["draw"]["dmgdrawmode"].GetValue<MenuList<string>>();
-
-            if (Config["draw"]["disable"].GetValue<MenuBool>().Value)
-                return;
-
-            switch (mode.Index)
-            {
-                case 0:
-                {
-                        DamageIndicator.DamageToUnit = ComboDmgFull;
-                        DamageIndicator.Color = Color.Aqua;
-                        DamageIndicator.Enabled = true;                   
-                    break;
-                }
-                case 1:
-                {
-                    
-                 DamageIndicator.Enabled = false;
-
-                    foreach (var enemy in
-                        ObjectManager.Get<Obj_AI_Hero>().Where(ene => !ene.IsDead && ene.IsEnemy && ene.IsVisible))
-                    {
-                        var percent = ComboDmgFull(enemy);
-                        var percent2 = ComboDmgFull(enemy)*100/enemy.MaxHealth;
-                        var pos = Drawing.WorldToScreen(enemy.Position);
-
-                        Drawing.DrawText(pos.X - 40, pos.Y + 20, System.Drawing.Color.Gold,
-                            "[" + percent.ToString("#.#") + "]" + " Combo Damage");
-
-                        if (percent2 < enemy.HealthPercent)
-                            Drawing.DrawText(pos.X - 40, pos.Y + 35, System.Drawing.Color.LawnGreen,
-                                "[" + percent2.ToString("#.#") + "%] " + " Combo Damage");
-                        if (percent2 > enemy.HealthPercent)
-                            Drawing.DrawText(pos.X - 40, pos.Y + 35, System.Drawing.Color.LawnGreen, "[KILLABLE]");
-                    }
-
-                    break;
-                    }
-                }
-            }
-
-        
-
-    private static void Ondraw(EventArgs args)
-        {
-
-            var mode = Config["draw"]["drawmode"].GetValue<MenuList<string>>();
-            if (Config["draw"]["disable"].GetValue<MenuBool>().Value) return;
-
-            switch (mode.Index)
-            {
-                case 0:
-                {
-                    if (Q.Level >= 1 && Config["draw"]["disableq"].GetValue<MenuBool>().Value)
-                        Drawing.DrawCircle(GameObjects.Player.Position, Q.Range,
-                            Color.FromArgb((int) Config["draw"]["drawq"].GetValue<MenuColor>().Color));
-                    if (W.Level >= 1 && Config["draw"]["disablew"].GetValue<MenuBool>().Value)
-                        Drawing.DrawCircle(GameObjects.Player.Position, W.Range,
-                            Color.FromArgb((int) Config["draw"]["draww"].GetValue<MenuColor>().Color));
-                    if (E.Level >= 1 && Config["draw"]["disablee"].GetValue<MenuBool>().Value)
-                        Drawing.DrawCircle(GameObjects.Player.Position, E.Range,
-                            Color.FromArgb((int) Config["draw"]["drawe"].GetValue<MenuColor>().Color));
-                    if (R.Level >= 1 && Config["draw"]["disabler"].GetValue<MenuBool>().Value)
-                        Drawing.DrawCircle(GameObjects.Player.Position, R.Range,
-                            Color.FromArgb((int) Config["draw"]["drawr"].GetValue<MenuColor>().Color));
-                    break;
-                }
-            }
-        }
-
-        private static void GameObject_OnDelete(GameObject sender, EventArgs args)
+        public static void GameObject_OnDelete(GameObject sender, EventArgs args)
         {
             //Lux E has detonated :S
-            if (sender.Name.Contains("Lux_Base_E"))
+            if (sender.Name.Contains("Lux_Base_E") && sender.IsAlly)
 
             {
                 LuxE = null;
+                Exist = 0;
             }
         }
 
-        private static void GameObject_OnCreate(GameObject sender, EventArgs args)
+        public static void GameObject_OnCreate(GameObject sender, EventArgs args)
         {
             //Lux E spell position (detonation check/enemy check)
-            if (sender.Name.Contains("Lux_Base_E"))
+            if (sender.Name.Contains("Lux_Base_E") && sender.IsAlly)
             {
                 LuxE = sender;
+                Exist = 1;
             }
         }
 
-        private static void OnUpdate(EventArgs args)
+        public static void OnUpdate(EventArgs args)
         {
             //ForceR
             if (Config["combo"]["forceR"].GetValue<MenuKeyBind>().Active)
@@ -473,7 +396,7 @@ namespace MightyLux
             Killsteal();
         }
 
-        private static void Lasthit()
+        public static void Lasthit()
         {
             var aaminions = GameObjects.EnemyMinions.Where(m => m.IsValid && m.Distance(Player) < Player.GetRealAutoAttackRange()).ToList();
             foreach (var minion in aaminions.Where(m => m.IsMinion && !m.IsDead && m.HasBuff("luxilluminatingfraulein")))
@@ -486,7 +409,7 @@ namespace MightyLux
                 }
             }
         }
-        private static void Laneclear()
+        public static void Laneclear()
         {
          var minions = GameObjects.EnemyMinions.Where(m => m.IsValid && m.Distance(Player) < E.Range).ToList();
          var aaminions = GameObjects.EnemyMinions.Where(m => m.IsValid && m.Distance(Player) < Player.GetRealAutoAttackRange()).ToList();
@@ -517,28 +440,34 @@ namespace MightyLux
             }
 
         }
-        private static double Rdmg(Obj_AI_Base target)
+        public static double Rdmg(Obj_AI_Base target)
         {
-            var passivedmg = 10 + (8*Player.Level) + Player.FlatMagicDamageMod*0.2 - target.FlatMagicReduction;
+
+
+            var passivedmg = Player.CalculateDamage(target, DamageType.Magical, 
+                    10 + (8 * Player.Level) + (0.2 * Player.FlatMagicDamageMod));
+
+
             double rdmg1 = 0;
             if (R.Level == 1)
-                rdmg1 += Player.CalculateDamage(target, DamageType.Magical, 290 + 0.75*Player.FlatMagicDamageMod);
+                rdmg1 += Player.CalculateDamage(target, DamageType.Magical, 300 + (0.75 * Player.FlatMagicDamageMod));
             if (R.Level == 2)
-                rdmg1 += Player.CalculateDamage(target, DamageType.Magical, 390 + 0.75 * Player.FlatMagicDamageMod);
+                rdmg1 += Player.CalculateDamage(target, DamageType.Magical, 400 + (0.75 * Player.FlatMagicDamageMod));
             if (R.Level == 3)
-                rdmg1 += Player.CalculateDamage(target, DamageType.Magical, 490 + 0.75 * Player.FlatMagicDamageMod);
+                rdmg1 += Player.CalculateDamage(target, DamageType.Magical, 599 + (0.75 * Player.FlatMagicDamageMod));
+
             if (target.HasBuff("luxilluminatingfraulein"))
                 rdmg1 += passivedmg;
 
             return rdmg1;
         }
-        private static double Edmg(Obj_AI_Base target)
+        public static double Edmg(Obj_AI_Base target)
         {
             return
               Player.CalculateDamage(target, DamageType.Magical,
                     new[] { 60, 105, 150, 195, 240 }[Program.E.Level - 1] + 0.6 * Player.FlatMagicDamageMod);
         }
-        private static double Qdmg(Obj_AI_Base target)
+        public static double Qdmg(Obj_AI_Base target)
         {
             return
               Player.CalculateDamage(target, DamageType.Magical,
@@ -553,9 +482,10 @@ namespace MightyLux
             (Player.BaseAttackDamage * 0.75) + ((Player.BaseAbilityDamage + Player.FlatMagicDamageMod) * 0.5));
 
             double dmg = Player.GetAutoAttackDamage(target);
+
             if (E.IsReady())
                 dmg += Edmg(target);
-            if (LuxE != null && target.Position.Distance(LuxE.Position) < 280)
+            if (LuxE != null && target.Position.Distance(LuxE.Position) < 275)
                 dmg += Edmg(target);
             if (Q.IsReady())
                 dmg += Qdmg(target);
@@ -569,7 +499,7 @@ namespace MightyLux
             return (float)dmg;
 
         }
-        private static double Overkillcheck(Obj_AI_Hero target)
+        public static double Overkillcheck(Obj_AI_Hero target)
         {
             var passivedmg = 10 + (8 * Player.Level) + Player.FlatMagicDamageMod * 0.2 - target.FlatMagicReduction;
             var lichdmg = Player.CalculateDamage(target, DamageType.Magical,
@@ -578,7 +508,7 @@ namespace MightyLux
             double dmg = 0;
             if (E.IsReady() && target.IsValidTarget(E.Range))
                 dmg += Edmg(target);
-            if (LuxE != null && target.Position.Distance(LuxE.Position) < 280)
+            if (LuxE != null && target.Position.Distance(LuxE.Position) < 275)
                 dmg += Edmg(target);
             if (Q.IsReady() && Q.GetPrediction(target).Hitchance >= HitChance.High && target.IsValidTarget(Q.Range))
                 dmg += Qdmg(target);
@@ -594,7 +524,7 @@ namespace MightyLux
             return dmg;
         }
 
-        private static void HarassLogic()
+        public static void HarassLogic()
         {
             var target = TargetSelector.GetTarget(Q.Range);
             var qprediction = Q.GetPrediction(target);
@@ -612,18 +542,25 @@ namespace MightyLux
                     Q.Cast(target);
             }
 
-            if (Config["harass"]["harrE"].GetValue<MenuBool>().Value && Player.ManaPercent >= Config["harass"]["harassmana"].GetValue<MenuSlider>().Value && Orbwalker.ActiveMode != OrbwalkerMode.Orbwalk)
+            if (Config["harass"]["harrE"].GetValue<MenuBool>().Value && Player.ManaPercent >= Config["harass"]["harassmana"].GetValue<MenuSlider>().Value 
+                && Orbwalker.ActiveMode != OrbwalkerMode.Orbwalk)
             {
-                if (LuxE == null && E.IsReady() && E.GetPrediction(target).Hitchance >= PredictionE())
-                    E.Cast(target);
                 if (target.HasBuff("luxilluminatingfraulein") && target.HasBuff("LuxLightBindingMis") &&
                     Player.Distance(target.Position) <= Player.GetRealAutoAttackRange())
                     return;
-                if (LuxE != null && target.Distance(LuxE.Position) <= 280)
+
+                if (Exist == 1 && target.Distance(LuxE.Position) <= 275)
                     E.Cast();
+
+                if (Q.GetPrediction(target).Hitchance >= PredictionQ() && getcollision <= 1 && Q.IsReady())
+                    return;
+
+                if (Exist == 0 && E.IsReady() && E.GetPrediction(target).Hitchance >= PredictionE())
+                    E.Cast(target);
+
             }
         }
-        private static void ComboLogic()
+        public static void ComboLogic()
         {
             var target = TargetSelector.GetTarget(Q.Range);
             var qprediction = Q.GetPrediction(target);
@@ -643,17 +580,22 @@ namespace MightyLux
             //ECAST
             if ((Config["spell"]["UseE"].GetValue<MenuBool>().Value) && Orbwalker.ActiveMode != OrbwalkerMode.Hybrid)
             {
-                if (LuxE == null && E.IsReady() && E.GetPrediction(target).Hitchance >= PredictionE())
-                    E.Cast(target);
                 if (target.HasBuff("luxilluminatingfraulein") && target.HasBuff("LuxLightBindingMis") &&
                     Player.Distance(target.Position) <= Player.GetRealAutoAttackRange())
                     return;
-                if (LuxE != null && target.Distance(LuxE.Position) <= 280)
+
+                if (Exist == 1 && target.Distance(LuxE.Position) <= 275)
                     E.Cast();
+
+                if (Q.GetPrediction(target).Hitchance >= PredictionQ() && getcollision <= 1 && Q.IsReady())
+                    return;
+
+                if (Exist == 0 && E.IsReady() && E.GetPrediction(target).Hitchance >= PredictionE())
+                    E.Cast(target);
             }
         }
 
-        private static float IgniteDamage(Obj_AI_Hero target)
+        public static float IgniteDamage(Obj_AI_Hero target)
         {
             if (Ignite == SpellSlot.Unknown || Player.Spellbook.CanUseSpell(Ignite) != SpellState.Ready)
                 return 0f;
@@ -663,7 +605,7 @@ namespace MightyLux
                 return (float) Player.GetSpellDamage(target, SpellSlot.Summoner2);
             return 0;
         }
-        private static HitChance PredictionQ()
+        public static HitChance PredictionQ()
         {
             var mode = Config["combo"]["hitchanceQ"].GetValue<MenuList<string>>();
 
@@ -680,7 +622,7 @@ namespace MightyLux
             }
             return HitChance.VeryHigh;
         }
-        private static HitChance PredictionE()
+        public static HitChance PredictionE()
         {
             var mode = Config["combo"]["hitchanceE"].GetValue<MenuList<string>>();
 
@@ -697,7 +639,7 @@ namespace MightyLux
             }
             return HitChance.High;
         }
-        private static HitChance PredictionR()
+        public static HitChance PredictionR()
         {
             var mode = Config["combo"]["hitchanceR"].GetValue<MenuList<string>>();
 
