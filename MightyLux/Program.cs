@@ -129,6 +129,8 @@ namespace MightyLux
 
             utility.Add(new MenuList<string>("dmgdrawer", "Damage Indicator",  new[] { "Custom", "SDK" }));
             utility.Add(new MenuColor("dmgcolor", "Damage Indicator Color", new ColorBGRA(32, 155, 120, 255)));
+            utility.Add(new MenuBool("drawRdmg", "Draw [R] Damage Indicator", true));
+           // utility.Add(new MenuColor("rdmgcolor", "Damage Indicator Color", new ColorBGRA(32, 155, 120, 255)));
           //  utility.Add(new MenuBool("HUD", "Heads-Up Display", true));
             utility.Add(new MenuBool("indicator", "Enemy Indicator", true));
             utility.Add(new MenuBool("orbmode", "Draw Active Orbwalk Mode", true));
@@ -447,6 +449,8 @@ namespace MightyLux
             var passivedmg = Player.CalculateDamage(target, DamageType.Magical, 
                     10 + (8 * Player.Level) + (0.2 * Player.FlatMagicDamageMod));
 
+            if (!R.IsReady() || R.Level < 1)
+                return 0;
 
             double rdmg1 = 0;
             if (R.Level == 1)

@@ -19,6 +19,19 @@ namespace MightyLux.Helpers
             Drawing.OnDraw += OnDraw;
             Drawing.OnDraw += DamageIndicator1;
             Drawing.OnDraw += Indicator;
+            Drawing.OnDraw += Rdamage;
+        }
+
+        private static void Rdamage(EventArgs args)
+        {
+            var enemies1 = GameObjects.EnemyHeroes.ToList();
+
+            foreach (var enemy in enemies1.Where(e => !e.IsDead && e.IsVisible))
+            {
+                var pos = enemy.HPBarPosition;
+                if (Config["util"]["drawRdmg"].GetValue<MenuBool>().Value && R.IsReady() && R.Level >= 1)
+                    Drawing.DrawText(pos.X + 10, pos.Y - 25, Color.Yellow, "[R] Damage: " + Program.Rdmg(enemy).ToString());
+            }
         }
 
         private static void Indicator(EventArgs args)
