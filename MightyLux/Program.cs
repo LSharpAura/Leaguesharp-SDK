@@ -104,8 +104,8 @@ namespace MightyLux
             jungle.Add(new MenuBool("baron", "Baron", true));
             jungle.Add(new MenuList<string>("jungleteam", "[BROKEN/NOT WORKING]",  new[] {"Enemy", "Ally"}));
 
-            var misc = Config.Add(new Menu("misc", "Misc Settings"));
-            misc.Add(new MenuSeparator("sound1", "Welcome Sound Effect"));
+           // var misc = Config.Add(new Menu("misc", "Misc Settings"));
+           // misc.Add(new MenuSeparator("sound1", "Welcome Sound Effect"));
             var drawing = Config.Add(new Menu("draw", "Draw Settings"));
             var utility = Config.Add(new Menu("util", "Utility Drawings"));
             drawing.Add(new MenuSeparator("Draw Menu", "Draw Menu"));
@@ -129,7 +129,7 @@ namespace MightyLux
 
             utility.Add(new MenuList<string>("dmgdrawer", "Damage Indicator",  new[] { "Custom", "SDK" }));
             utility.Add(new MenuColor("dmgcolor", "Damage Indicator Color", new ColorBGRA(32, 155, 120, 255)));
-            utility.Add(new MenuBool("HUD", "Heads-Up Display", true));
+          //  utility.Add(new MenuBool("HUD", "Heads-Up Display", true));
             utility.Add(new MenuBool("indicator", "Enemy Indicator", true));
             utility.Add(new MenuBool("orbmode", "Draw Active Orbwalk Mode", true));
 
