@@ -68,7 +68,6 @@ namespace MightyLux
             combo.Add((new MenuBool("UseRKS", "Use [R] for Killstealing", true)));
             combo.Add(new MenuBool("UseEKS", "Use [E] for Killstealing", true));
 
-
             //Prediction
             combo.Add(new MenuSeparator("science", "Prediction Settings"));
             combo.Add(new MenuList<string>("hitchanceQ", "[Q] Hitchance",
@@ -109,10 +108,6 @@ namespace MightyLux
             misc.Add(new MenuSeparator("sound", "Sound Settings"));
             misc.Add(new MenuBool("rsound", "Enable [R] Cast Sound Effect", true));
 
-
-
-
-
             var drawing = Config.Add(new Menu("draw", "Draw Settings"));
             var utility = Config.Add(new Menu("util", "Utility Drawings"));
             drawing.Add(new MenuSeparator("Draw Menu", "Draw Menu"));
@@ -150,9 +145,6 @@ namespace MightyLux
                     Config.RestoreDefault();
                 }
             });
-
-            //Font
-
 
             Config.Attach();
             //Drawings.DrawEvent();
