@@ -4,7 +4,6 @@ using LeagueSharp;
 using LeagueSharp.SDK.Core;
 using LeagueSharp.SDK.Core.Extensions;
 using LeagueSharp.SDK.Core.Extensions.SharpDX;
-using LeagueSharp.SDK.Core.IDrawing;
 using LeagueSharp.SDK.Core.UI;
 using LeagueSharp.SDK.Core.UI.IMenu.Values;
 using SharpDX;
